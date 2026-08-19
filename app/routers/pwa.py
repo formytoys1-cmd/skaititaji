@@ -51,6 +51,14 @@ def manifest() -> JSONResponse:
             {"name": "Palīdzība", "url": "/palidziba",
              "icons": [{"src": "/static/icons/icon-192.png", "sizes": "192x192"}]},
         ],
+        "screenshots": [
+            {"src": "/static/screenshots/mobile-resident.png", "sizes": "780x1688",
+             "type": "image/png", "form_factor": "narrow",
+             "label": "Skaitītāju rādījumu nodošana"},
+            {"src": "/static/screenshots/desktop-manager.png", "sizes": "1280x800",
+             "type": "image/png", "form_factor": "wide",
+             "label": "Apsaimniekotāja panelis"},
+        ],
     }
     return JSONResponse(
         data,

@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session, select
 
 from app.auth import require_user
@@ -106,6 +106,78 @@ def dashboard(
             "anomalies": anomalies, "logs": logs[:10],
         },
         current_user=user, org=org,
+    )
+
+
+@router.get("/parvalde/eksports.csv")
+def manager_export(
+    period: str | None = None,
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+):
+    """CSV-выгрузка показаний по всем счётчикам организации за период.
+
+    Удобно для бухгалтерии/сверки перед выгрузкой в Visma Horizon. По умолчанию
+    — текущий период; можно указать ?period=YYYY-MM.
+    """
+    if not _require_manager(user):
+        return RedirectResponse("/", 303)
+
+    org = session.get(Organization, user.organization_id) if user.organization_id else \
+        session.exec(select(Organization)).first()
+    per = period or current_period()
+
+    building_ids = [b.id for b in session.exec(
+        select(Building).where(Building.organization_id == org.id)).all()]
+    units = session.exec(
+        select(Unit).where(Unit.building_id.in_(building_ids))).all() if building_ids else []
+    unit_by_id = {u.id: u for u in units}
+    unit_ids = list(unit_by_id.keys())
+    meters = session.exec(
+        select(Meter).where(Meter.unit_id.in_(unit_ids))).all() if unit_ids else []
+    meter_ids = [m.id for m in meters]
+    readings = session.exec(
+        select(Reading).where(
+            Reading.meter_id.in_(meter_ids), Reading.period == per)
+    ).all() if meter_ids else []
+    reading_by_meter = {r.meter_id: r for r in readings}
+
+    def rows():
+        yield "\ufeff"
+        header = [
+            "Dzivoklis", "Konts", "Skaititajs_Nr", "Tips", "Periods",
+            "Radijums", "Paterins", "Vieniba", "Datums", "Statuss",
+            "Anomalija", "Avots", "Iesniegts",
+        ]
+        yield ";".join(header) + "\r\n"
+        for m in meters:
+            unit = unit_by_id.get(m.unit_id)
+            mtype = m.meter_type
+            r = reading_by_meter.get(m.id)
+            row = [
+                (unit.number if unit else ""),
+                (unit.account_number if unit else ""),
+                m.serial_number or "",
+                (mtype.name_lv if mtype else ""),
+                per,
+                (f"{r.value:.3f}" if r else ""),
+                (f"{r.consumption:.3f}" if (r and r.consumption is not None) else ""),
+                (mtype.unit if mtype else ""),
+                (r.reading_date.strftime("%Y-%m-%d") if (r and r.reading_date) else ""),
+                (r.status.value if r else "nav_iesniegts"),
+                ("ja" if (r and r.is_anomaly) else ""),
+                (r.source.value if r else ""),
+                ("ja" if r else "ne"),
+            ]
+            safe = ['"' + c.replace('"', '""') + '"' if (";" in c or '"' in c) else c
+                    for c in row]
+            yield ";".join(safe) + "\r\n"
+
+    filename = f"skaititaji_parvalde_{per}.csv"
+    return StreamingResponse(
+        rows(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
