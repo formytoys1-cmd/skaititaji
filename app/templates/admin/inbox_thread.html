@@ -145,7 +145,8 @@
     unseen = 0; if (badge) badge.hidden = true; document.title = baseTitle;
   });
 
-  setInterval(poll, 10000); // каждые 10 секунд
+  setTimeout(poll, 1500);    // первый опрос почти сразу
+  setInterval(poll, 8000);   // затем каждые 8 секунд
 })();
 </script>
 {% endblock %}
