@@ -27,6 +27,8 @@ const PAGES = [
   { url: '/palidziba/administrators', name: 'help-admin' },
   { url: '/privatums', name: 'privacy' },
   { url: '/pieejamiba', name: 'accessibility' },
+  { url: '/atbilstiba', name: 'compliance' },
+  { url: '/this-page-does-not-exist', name: '404' },
   { url: '/demo-login?role=resident', name: 'resident-dashboard' },
   { url: '/demo-login?role=manager', name: 'manager-dashboard' },
   { url: '/demo-login?role=admin', name: 'admin-dashboard' },

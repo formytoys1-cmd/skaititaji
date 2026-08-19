@@ -14,6 +14,22 @@ from app.models import Organization, User
 templates = Jinja2Templates(directory="app/templates")
 
 
+def _announcement(org: Optional[Organization], lang: str) -> Optional[str]:
+    """Баннер-объявление: если у организации открыто окно подачи — показываем
+    дедлайн. Уместно для utility (снижает нагрузку на поддержку)."""
+    if not org:
+        return None
+    try:
+        from datetime import date
+
+        from app.services import is_window_open
+        if is_window_open(org):
+            return t(lang, "announce.window_open").format(day=org.reading_day_to)
+    except Exception:
+        return None
+    return None
+
+
 def flash(request: Request, text: str, level: str = "info") -> None:
     msgs = request.session.get("_messages", [])
     msgs.append({"text": text, "level": level})
@@ -55,6 +71,7 @@ def render(
         "lang_names": LANG_NAMES,
         "t": lambda key: t(lang, key),
         "meter_name": lambda mt: meter_name(mt, lang),
+        "announcement": _announcement(org, lang),
     }
     if context:
         ctx.update(context)

@@ -6,17 +6,17 @@
     <h1 class="text-2xl font-bold">{{ t('login.title') }}</h1>
     <p class="text-slate-500 text-sm mt-1">{{ t('login.subtitle') }}</p>
 
-    <form method="post" action="/login" class="mt-6 space-y-4">
+    <form method="post" action="/login" class="mt-6 space-y-4" onsubmit="lockSubmit(this)">
       <div>
-        <label class="block text-sm font-medium mb-1">{{ t('login.email') }}</label>
-        <input id="email" name="email" type="email" required autofocus
+        <label for="email" class="block text-sm font-medium mb-1">{{ t('login.email') }}</label>
+        <input id="email" name="email" type="email" required autofocus autocomplete="email"
                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none"
                placeholder="resident@demo.lv">
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1">{{ t('login.password') }}</label>
+        <label for="password" class="block text-sm font-medium mb-1">{{ t('login.password') }}</label>
         <div class="relative">
-          <input id="password" name="password" type="password" required
+          <input id="password" name="password" type="password" required autocomplete="current-password"
                  class="w-full px-3 py-2 pr-16 rounded-lg border border-slate-300 focus:brand-border outline-none"
                  placeholder="demo1234">
           <button type="button" id="pwToggle" onclick="togglePw()"

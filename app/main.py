@@ -118,6 +118,28 @@ app.include_router(admin.router)
 app.include_router(moderator.router)
 
 
+# Кастомная 404-страница (брендированная, 3 языка).
+from app.database import engine as _engine  # noqa: E402
+from app.models import User as _User  # noqa: E402
+from app.web import render as _render  # noqa: E402
+
+
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    if request.url.path.startswith("/api/"):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"detail": "Not found"}, status_code=404)
+    user = None
+    try:
+        uid = request.session.get("user_id") if hasattr(request, "session") else None
+        if uid:
+            with Session(_engine) as s:
+                user = s.get(_User, uid)
+    except Exception:
+        user = None
+    return _render(request, "404.html", current_user=user, status_code=404)
+
+
 # --------------------------------------------------------------------------- #
 # Открытый JSON API (для интеграций) — конкурентное преимущество из анализа рынка
 # --------------------------------------------------------------------------- #

@@ -2,26 +2,32 @@
 {% block title %}{{ t('nav.my_flat') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-3xl mx-auto px-4 py-8">
-  <div class="flex items-center justify-between flex-wrap gap-3">
+  <div class="flex items-start justify-between flex-wrap gap-3">
     <div>
       <h1 class="text-2xl font-bold">{{ t('res.title') }}</h1>
-      <p class="text-slate-500 text-sm">{{ t('res.period') }}: <strong>{{ period }}</strong>
+      <p class="text-slate-600 text-sm">{{ t('res.period') }}: <strong>{{ period }}</strong>
         · <a href="/palidziba/iedzivotajs" class="brand-text underline">{{ t('nav.help') }}</a></p>
     </div>
-    {% if window_open %}
-      <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">{{ t('res.window_open') }}</span>
-    {% else %}
-      <span class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm border border-amber-200">{{ t('res.window_closed') }}</span>
-    {% endif %}
   </div>
 
+  <!-- Статус окна подачи — заметный баннер (визуальная иерархия) -->
+  {% if window_open %}
+    <div class="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200" role="status">
+      <span aria-hidden="true">●</span><span class="font-medium">{{ t('res.window_open') }}</span>
+    </div>
+  {% else %}
+    <div class="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-50 text-amber-800 border border-amber-200" role="status">
+      <span aria-hidden="true">⚠</span><span>{{ t('res.window_closed') }}</span>
+    </div>
+  {% endif %}
+
   {% if not unit_cards %}
-    <div class="mt-8 bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+    <div class="mt-8 bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-600">
       {{ t('res.no_flat') }}
     </div>
   {% endif %}
 
-  <form method="post" action="/dzivoklis/submit" class="mt-6 space-y-6">
+  <form method="post" action="/dzivoklis/submit" class="mt-6 space-y-6" onsubmit="lockSubmit(this)">
     {% for card in unit_cards %}
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
       <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
@@ -49,8 +55,11 @@
           <div class="w-40">
             <div class="relative">
               <input
+                id="meter_{{ m.meter.id }}"
                 name="value_{{ m.meter.id }}"
                 type="number" step="0.001" inputmode="decimal"
+                aria-label="{{ meter_name(m.type) }}, {{ t('res.flat') }} {{ card.unit.number }} ({{ m.type.unit }})"
+                aria-describedby="hint_{{ m.meter.id }}"
                 value="{{ '%.3f'|format(m.current.value) if m.current else '' }}"
                 data-prev="{{ m.prev_value }}"
                 data-unit="{{ m.type.unit }}"
@@ -59,7 +68,7 @@
                 class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none text-right"
                 placeholder="0.000">
             </div>
-            <div class="text-xs mt-1 text-right consumption-hint text-slate-600">{{ t('res.consumption') }}: —</div>
+            <div id="hint_{{ m.meter.id }}" class="text-xs mt-1 text-right consumption-hint text-slate-600">{{ t('res.consumption') }}: —</div>
           </div>
         </div>
         {% endfor %}

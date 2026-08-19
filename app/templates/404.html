@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ t('err404.title') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-xl mx-auto px-4 py-20 text-center">
+  <div class="text-6xl font-bold brand-text">404</div>
+  <h1 class="text-2xl font-bold mt-4">{{ t('err404.title') }}</h1>
+  <p class="text-slate-600 mt-2">{{ t('err404.text') }}</p>
+  <div class="mt-8 flex justify-center gap-3 flex-wrap">
+    <a href="/" class="px-5 py-3 rounded-xl brand-bg text-white font-semibold">{{ t('err404.home') }}</a>
+    <a href="/palidziba" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">{{ t('nav.help') }}</a>
+  </div>
+</section>
+{% endblock %}

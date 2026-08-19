@@ -267,6 +267,38 @@ T: dict[str, dict[str, str]] = {
         "en": "This website strives to conform to WCAG 2.2 level AA and the EU Web "
               "Accessibility Directive (2016/2102).",
     },
+    # ---- Announcement bar / 404 / trust --------------------------------- #
+    "announce.label": {"lv": "Paziņojums", "ru": "Объявление", "en": "Announcement"},
+    "announce.dismiss": {"lv": "Aizvērt paziņojumu", "ru": "Закрыть объявление",
+                         "en": "Dismiss announcement"},
+    "announce.window_open": {
+        "lv": "Rādījumu nodošana ir atvērta līdz mēneša {day}. datumam.",
+        "ru": "Приём показаний открыт до {day} числа месяца.",
+        "en": "Reading submission is open until day {day} of the month.",
+    },
+    "trust.title": {"lv": "Uzticama un atbilstoša", "ru": "Надёжно и соответствует",
+                    "en": "Trusted & compliant"},
+    "trust.wcag": {"lv": "Pieejamība WCAG 2.2 AA", "ru": "Доступность WCAG 2.2 AA",
+                   "en": "WCAG 2.2 AA accessible"},
+    "trust.gdpr": {"lv": "GDPR atbilstība", "ru": "Соответствие GDPR",
+                   "en": "GDPR compliant"},
+    "trust.visma": {"lv": "Visma Horizon integrācija", "ru": "Интеграция Visma Horizon",
+                    "en": "Visma Horizon integration"},
+    "trust.langs": {"lv": "3 valodas: LV / RU / EN", "ru": "3 языка: LV / RU / EN",
+                    "en": "3 languages: LV / RU / EN"},
+    "err404.title": {"lv": "Lapa nav atrasta", "ru": "Страница не найдена",
+                     "en": "Page not found"},
+    "err404.text": {
+        "lv": "Diemžēl šāda lapa neeksistē vai ir pārvietota.",
+        "ru": "К сожалению, такой страницы нет или она перемещена.",
+        "en": "Sorry, this page doesn't exist or has moved.",
+    },
+    "err404.home": {"lv": "Uz sākumu", "ru": "На главную", "en": "Go home"},
+    "landing.trust_intro": {
+        "lv": "Veidots pēc augstākajiem standartiem:",
+        "ru": "Построено по высоким стандартам:",
+        "en": "Built to high standards:",
+    },
 }
 
 

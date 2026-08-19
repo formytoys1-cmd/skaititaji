@@ -9,10 +9,22 @@
         {{ t('landing.title') }}
       </h1>
       <p class="mt-5 text-white/90 text-lg">{{ t('landing.desc') }}</p>
-      <div class="mt-8 flex flex-wrap gap-3">
-        <a href="/demo-login?role=resident" class="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold shadow hover:bg-slate-100">{{ t('landing.enter_demo') }}</a>
-        <a href="/login" class="px-5 py-3 rounded-xl bg-white/90 text-slate-900 font-semibold hover:bg-white">{{ t('nav.login') }}</a>
-        <a href="/palidziba" class="px-5 py-3 rounded-xl bg-white/90 text-slate-900 font-semibold hover:bg-white">{{ t('nav.help') }}</a>
+      <div class="mt-8 flex flex-wrap gap-3 items-center">
+        <a href="/demo-login?role=resident" class="px-6 py-3 rounded-xl bg-white text-slate-900 font-semibold shadow-lg hover:bg-slate-100">{{ t('landing.enter_demo') }}</a>
+        <a href="/login" class="px-5 py-3 rounded-xl border-2 border-white/80 text-white font-semibold hover:bg-white/15">{{ t('nav.login') }}</a>
+        <a href="/palidziba" class="px-3 py-3 text-white font-medium underline underline-offset-4 hover:text-white/80">{{ t('nav.help') }}</a>
+      </div>
+
+      <!-- Полоса доверия (честные факты, не фейковые цифры) -->
+      <div class="mt-8">
+        <p class="text-white/90 text-xs uppercase tracking-wide mb-2">{{ t('landing.trust_intro') }}</p>
+        <ul class="flex flex-wrap gap-2">
+          {% for key in ['trust.wcag','trust.gdpr','trust.visma','trust.langs'] %}
+          <li class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/40 text-white text-sm">
+            <span aria-hidden="true">✓</span>{{ t(key) }}
+          </li>
+          {% endfor %}
+        </ul>
       </div>
     </div>
   </div>

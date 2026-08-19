@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="description" content="{{ app_tagline }}">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="{{ request.base_url }}{{ request.url.path[1:] }}">
+  <!-- Open Graph (корректный вид при шаринге ссылки) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ app_name }}">
+  <meta property="og:title" content="{% block og_title %}{{ app_name }}{% endblock %}">
+  <meta property="og:description" content="{{ app_tagline }}">
+  <meta property="og:locale" content="{{ lang }}">
+  <meta name="twitter:card" content="summary">
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -24,8 +33,11 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
     }
-    /* Минимальный тач-таргет для интерактивных элементов на мобильных (WCAG 2.5.8) */
-    a, button, input[type="submit"], select { min-height: 24px; }
+    /* Тач-таргеты для кнопок/полей на мобильных (WCAG 2.5.8 / 2.5.5) */
+    @media (max-width: 640px) {
+      button, input[type="submit"], select, input[type="file"] { min-height: 44px; }
+      input[type="email"], input[type="password"], input[type="number"], input[type="text"], textarea { min-height: 44px; }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -67,6 +79,21 @@
       </nav>
     </div>
   </header>
+
+  {% if announcement %}
+  <div id="announceBar" class="brand-bg text-white text-sm" role="region" aria-label="{{ t('announce.label') }}">
+    <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-center gap-3 text-center">
+      <span aria-hidden="true">📢</span>
+      <span>{{ announcement }}</span>
+      <button type="button" onclick="dismissAnnounce()" aria-label="{{ t('announce.dismiss') }}"
+              class="ml-2 shrink-0 rounded px-2 py-0.5 bg-white/20 hover:bg-white/30">✕</button>
+    </div>
+  </div>
+  <script>
+    (function(){ try { if (sessionStorage.getItem('annDismiss')==='{{ announcement|truncate(20,true,"") }}') document.getElementById('announceBar').hidden=true; } catch(e){} })();
+    function dismissAnnounce(){ try { sessionStorage.setItem('annDismiss','{{ announcement|truncate(20,true,"") }}'); } catch(e){} document.getElementById('announceBar').hidden=true; }
+  </script>
+  {% endif %}
 
   {% if messages %}
   <div class="max-w-6xl mx-auto w-full px-4 mt-4" role="status" aria-live="polite">
@@ -119,6 +146,12 @@
     function acceptCookies(){
       try { localStorage.setItem('cookieNoticeAck','1'); } catch(e){}
       document.getElementById('cookieNotice').hidden = true;
+    }
+    // Защита от двойной отправки формы (UX + целостность данных).
+    function lockSubmit(form){
+      var btn = form.querySelector('button[type="submit"], button:not([type])');
+      if (btn) { setTimeout(function(){ btn.disabled = true; btn.style.opacity = '0.7'; btn.setAttribute('aria-busy','true'); }, 0); }
+      return true;
     }
   </script>
 </body>

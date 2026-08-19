@@ -7,8 +7,8 @@
       <h1 class="text-2xl font-bold">{{ org.name }} — pārvaldes panelis</h1>
       <p class="text-slate-500 text-sm">Periods: <strong>{{ period }}</strong> · Integrācija: {{ org.integration_provider }}</p>
     </div>
-    <form method="post" action="/parvalde/sync">
-      <button class="px-5 py-2.5 rounded-xl brand-bg text-white font-semibold">⟳ Sinhronizēt ar Visma Horizon</button>
+    <form method="post" action="/parvalde/sync" onsubmit="lockSubmit(this)">
+      <button class="px-5 py-2.5 rounded-xl brand-bg text-white font-semibold"><span aria-hidden="true">⟳</span> Sinhronizēt ar Visma Horizon</button>
     </form>
   </div>
 
@@ -30,7 +30,8 @@
     {% endfor %}
   </div>
 
-  <div class="mt-2 bg-white rounded-full h-2 overflow-hidden border border-slate-200">
+  <div class="mt-2 bg-white rounded-full h-2 overflow-hidden border border-slate-200"
+       role="progressbar" aria-label="Nodošanas gaita" aria-valuenow="{{ stats.progress }}" aria-valuemin="0" aria-valuemax="100">
     <div class="h-full brand-bg" style="width: {{ stats.progress }}%"></div>
   </div>
 
@@ -39,14 +40,15 @@
     <div class="px-5 py-3 border-b border-slate-200 font-semibold">Skaitītāju statuss ({{ period }})</div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-slate-500 text-left">
+        <caption class="sr-only">Skaitītāju statuss periodam {{ period }}</caption>
+        <thead class="bg-slate-50 text-slate-600 text-left">
           <tr>
-            <th class="px-4 py-2 font-medium">Dzīvoklis</th>
-            <th class="px-4 py-2 font-medium">Tips</th>
-            <th class="px-4 py-2 font-medium">Skaitītājs</th>
-            <th class="px-4 py-2 font-medium text-right">Rādījums</th>
-            <th class="px-4 py-2 font-medium text-right">Patēriņš</th>
-            <th class="px-4 py-2 font-medium">Statuss</th>
+            <th scope="col" class="px-4 py-2 font-medium">Dzīvoklis</th>
+            <th scope="col" class="px-4 py-2 font-medium">Tips</th>
+            <th scope="col" class="px-4 py-2 font-medium">Skaitītājs</th>
+            <th scope="col" class="px-4 py-2 font-medium text-right">Rādījums</th>
+            <th scope="col" class="px-4 py-2 font-medium text-right">Patēriņš</th>
+            <th scope="col" class="px-4 py-2 font-medium">Statuss</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
