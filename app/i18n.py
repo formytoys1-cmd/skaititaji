@@ -223,6 +223,50 @@ T: dict[str, dict[str, str]] = {
     "help.back": {"lv": "← Visas pamācības", "ru": "← Все инструкции",
                   "en": "← All guides"},
     "help.step": {"lv": "Solis", "ru": "Шаг", "en": "Step"},
+    # ---- Доступность / EU / cookie --------------------------------------- #
+    "a11y.skip": {"lv": "Pāriet uz saturu", "ru": "Перейти к содержимому",
+                  "en": "Skip to content"},
+    "nav.privacy": {"lv": "Privātums", "ru": "Приватность", "en": "Privacy"},
+    "nav.accessibility": {"lv": "Pieejamība", "ru": "Доступность",
+                          "en": "Accessibility"},
+    "lang.aria": {"lv": "Valoda", "ru": "Язык", "en": "Language"},
+    "lang.lv_full": {"lv": "Latviešu valoda", "ru": "Латышский язык",
+                     "en": "Latvian"},
+    "lang.ru_full": {"lv": "Krievu valoda", "ru": "Русский язык", "en": "Russian"},
+    "lang.en_full": {"lv": "Angļu valoda", "ru": "Английский язык", "en": "English"},
+    "cookie.text": {
+        "lv": "Šī vietne izmanto tikai nepieciešamās sīkdatnes (sesija un valodas "
+              "izvēle). Analītikas vai reklāmas sīkdatnes netiek izmantotas.",
+        "ru": "Этот сайт использует только необходимые cookie (сессия и выбор "
+              "языка). Аналитических и рекламных cookie нет.",
+        "en": "This site uses only essential cookies (session and language "
+              "choice). No analytics or advertising cookies.",
+    },
+    "cookie.ok": {"lv": "Sapratu", "ru": "Понятно", "en": "Got it"},
+    "cookie.more": {"lv": "Uzzināt vairāk", "ru": "Подробнее", "en": "Learn more"},
+    # ---- Приватность ----------------------------------------------------- #
+    "privacy.title": {"lv": "Privātuma politika", "ru": "Политика приватности",
+                      "en": "Privacy policy"},
+    "privacy.intro": {
+        "lv": "Mēs cienām jūsu privātumu un apstrādājam personas datus saskaņā ar "
+              "ES Vispārīgo datu aizsardzības regulu (GDPR, 2016/679).",
+        "ru": "Мы уважаем вашу приватность и обрабатываем персональные данные в "
+              "соответствии с Общим регламентом ЕС по защите данных (GDPR, "
+              "2016/679).",
+        "en": "We respect your privacy and process personal data in accordance "
+              "with the EU General Data Protection Regulation (GDPR, 2016/679).",
+    },
+    # ---- Декларация доступности ------------------------------------------ #
+    "acc.title": {"lv": "Pieejamības paziņojums", "ru": "Декларация доступности",
+                  "en": "Accessibility statement"},
+    "acc.intro": {
+        "lv": "Šī vietne cenšas nodrošināt atbilstību WCAG 2.2 AA līmenim un ES "
+              "Tīmekļvietņu pieejamības direktīvai (2016/2102).",
+        "ru": "Этот сайт стремится соответствовать уровню WCAG 2.2 AA и Директиве "
+              "ЕС о доступности веб-сайтов (2016/2102).",
+        "en": "This website strives to conform to WCAG 2.2 level AA and the EU Web "
+              "Accessibility Directive (2016/2102).",
+    },
 }
 
 

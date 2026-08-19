@@ -15,3 +15,8 @@ data/
 .DS_Store
 .idea/
 .vscode/
+
+# Аудит (локальные зависимости)
+tools/audit/node_modules/
+tools/audit/a11y-report.json
+tools/audit/.lighthouseci/

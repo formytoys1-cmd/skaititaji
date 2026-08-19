@@ -47,7 +47,7 @@ def render(
         "app_tagline": settings.app_tagline,
         "current_user": current_user,
         "org": org,
-        "brand_color": (org.brand_color if org else "#0ea5e9"),
+        "brand_color": (org.brand_color if org else "#0369a1"),
         "messages": _pop_messages(request),
         # i18n
         "lang": lang,

@@ -9,10 +9,10 @@
       <div class="w-10 h-10 rounded-xl brand-bg text-white flex items-center justify-center text-lg">📨</div>
       <div>
         <div class="font-semibold">Moderatora konsole</div>
-        <div class="text-xs text-slate-400">Nosūtīt norādījumus aģentam vietnes pārstrādei</div>
+        <div class="text-xs text-slate-600">Nosūtīt norādījumus aģentam vietnes pārstrādei</div>
       </div>
     </div>
-    <span class="text-slate-400">→</span>
+    <span class="text-slate-600">→</span>
   </a>
 
   <!-- Организации -->
@@ -33,14 +33,14 @@
           {% for row in org_rows %}
           <tr>
             <td class="px-4 py-2 font-medium">{{ row.org.name }}
-              <span class="text-slate-400 font-normal">/o/{{ row.org.slug }}</span></td>
+              <span class="text-slate-600 font-normal">/o/{{ row.org.slug }}</span></td>
             <td class="px-4 py-2">{{ row.org.kind }}</td>
             <td class="px-4 py-2">{{ row.buildings }}</td>
             <td class="px-4 py-2">{{ row.org.integration_provider }}
-              {% if row.mock %}<span class="text-xs text-amber-600">(mock)</span>{% endif %}</td>
+              {% if row.mock %}<span class="text-xs text-amber-700">(mock)</span>{% endif %}</td>
             <td class="px-4 py-2">
-              {% if row.integration_ok %}<span class="text-emerald-600">✓ Pieejama</span>
-              {% else %}<span class="text-red-600">✗ Nav pieejama</span>{% endif %}
+              {% if row.integration_ok %}<span class="text-emerald-700">✓ Pieejama</span>
+              {% else %}<span class="text-red-700">✗ Nav pieejama</span>{% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -60,9 +60,9 @@
                style="background: {{ t.color }}18;">{{ t.icon }}</div>
           <div class="flex-1">
             <div class="font-medium">{{ t.name_lv }}
-              <span class="text-slate-400 font-normal text-sm">/ {{ t.name_ru }} / {{ t.name_en }}</span>
+              <span class="text-slate-600 font-normal text-sm">/ {{ t.name_ru }} / {{ t.name_en }}</span>
             </div>
-            <div class="text-xs text-slate-400">
+            <div class="text-xs text-slate-600">
               <code>{{ t.code }}</code> · {{ t.category.value }} · {{ t.unit }} · {{ t.decimals }} zīmes · anomālija > {{ t.max_plausible_consumption }}</div>
           </div>
           <form method="post" action="/admin/meter-types/{{ t.id }}/toggle">
@@ -78,7 +78,7 @@
     <!-- Добавление нового типа -->
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
       <div class="font-semibold mb-1">Pievienot skaitītāja tipu</div>
-      <p class="text-xs text-slate-400 mb-4">Jauns tips bez koda izmaiņām — demonstrē paplašināmību.</p>
+      <p class="text-xs text-slate-600 mb-4">Jauns tips bez koda izmaiņām — demonstrē paplašināmību.</p>
       <form method="post" action="/admin/meter-types" class="space-y-3 text-sm">
         <input name="code" required placeholder="code (piem. heat_flat)" class="w-full px-3 py-2 rounded-lg border border-slate-300">
         <input name="name_lv" required placeholder="Nosaukums LV" class="w-full px-3 py-2 rounded-lg border border-slate-300">
@@ -92,7 +92,7 @@
           <input name="decimals" type="number" value="3" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300" placeholder="Zīmes">
           <input name="color" value="#0ea5e9" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300" placeholder="Krāsa">
         </div>
-        <select name="category" class="w-full px-3 py-2 rounded-lg border border-slate-300">
+        <select name="category" aria-label="Kategorija" class="w-full px-3 py-2 rounded-lg border border-slate-300">
           {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
         </select>
         <input name="max_plausible_consumption" type="number" step="0.1" value="100" class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="Anomālijas slieksnis">
@@ -101,7 +101,7 @@
     </div>
   </div>
 
-  <div class="mt-6 text-xs text-slate-400">
+  <div class="mt-6 text-xs text-slate-600">
     Atvērtais API: <code>/api/meter-types</code> · <code>/api/organizations</code> · <code>/api/health</code>
   </div>
 </section>

@@ -88,3 +88,31 @@ def help_guide(
         request, "help/guide.html", {"guide": data},
         current_user=current_user,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Правовые страницы (EU: GDPR + декларация доступности)
+# --------------------------------------------------------------------------- #
+@router.get("/privatums")
+def privacy(
+    request: Request,
+    session: Session = Depends(get_session),
+    current_user: User | None = Depends(get_current_user),
+):
+    org = session.exec(
+        select(Organization).where(Organization.slug == "demo-nams")
+    ).first()
+    return render(request, "legal/privacy.html", current_user=current_user, org=org)
+
+
+@router.get("/pieejamiba")
+def accessibility(
+    request: Request,
+    session: Session = Depends(get_session),
+    current_user: User | None = Depends(get_current_user),
+):
+    org = session.exec(
+        select(Organization).where(Organization.slug == "demo-nams")
+    ).first()
+    return render(request, "legal/accessibility.html",
+                  current_user=current_user, org=org)

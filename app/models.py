@@ -92,7 +92,7 @@ class Organization(SQLModel, table=True):
     address: Optional[str] = None
 
     # Брендинг демо-страниц организации
-    brand_color: str = Field(default="#0ea5e9")
+    brand_color: str = Field(default="#0369a1")
     logo_text: Optional[str] = None
 
     # Окно подачи показаний (дни месяца)

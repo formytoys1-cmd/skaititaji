@@ -3,48 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="{{ app_tagline }}">
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { theme: { extend: { colors: { brand: "{{ brand_color|default('#0ea5e9') }}" } } } }
+    tailwind.config = { theme: { extend: { colors: { brand: "{{ brand_color|default('#0369a1') }}" } } } }
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; }
-    .brand-bg { background-color: {{ brand_color|default('#0ea5e9') }}; }
-    .brand-text { color: {{ brand_color|default('#0ea5e9') }}; }
-    .brand-border { border-color: {{ brand_color|default('#0ea5e9') }}; }
+    .brand-bg { background-color: {{ brand_color|default('#0369a1') }}; }
+    .brand-text { color: {{ brand_color|default('#0369a1') }}; }
+    .brand-border { border-color: {{ brand_color|default('#0369a1') }}; }
+    /* Доступность: видимый фокус для клавиатуры (WCAG 2.4.7) */
+    :focus-visible { outline: 3px solid {{ brand_color|default('#0369a1') }}; outline-offset: 2px; border-radius: 4px; }
+    /* Skip-link (WCAG 2.4.1) */
+    .skip-link { position: absolute; left: 8px; top: -48px; z-index: 50; transition: top .15s ease; }
+    .skip-link:focus { top: 8px; }
+    /* Уважение к prefers-reduced-motion (WCAG 2.3.3) */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+    }
+    /* Минимальный тач-таргет для интерактивных элементов на мобильных (WCAG 2.5.8) */
+    a, button, input[type="submit"], select { min-height: 24px; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <a href="#main" class="skip-link px-4 py-2 rounded-lg brand-bg text-white font-semibold">{{ t('a11y.skip') }}</a>
+
   <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
-    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2 font-semibold">
-        <span class="w-8 h-8 rounded-lg brand-bg text-white flex items-center justify-center">💧</span>
+    <div class="max-w-6xl mx-auto px-4 min-h-14 py-2 flex items-center justify-between gap-2 flex-wrap">
+      <a href="/" class="flex items-center gap-2 font-semibold" aria-label="{{ app_name }}">
+        <span class="w-8 h-8 rounded-lg brand-bg text-white flex items-center justify-center" aria-hidden="true">💧</span>
         <span>{{ org.logo_text if org else app_name }}</span>
       </a>
-      <nav class="flex items-center gap-3 text-sm">
-        <a href="/palidziba" class="hover:brand-text hidden sm:inline">{{ t('nav.help') }}</a>
+      <nav class="flex items-center gap-3 text-sm flex-wrap justify-end" aria-label="{{ t('nav.help') }}">
+        <a href="/palidziba" class="text-slate-600 hover:brand-text">{{ t('nav.help') }}</a>
         <!-- Переключатель языка -->
-        <span class="flex items-center gap-1 text-xs">
+        <div class="flex items-center gap-1 text-xs" role="group" aria-label="{{ t('lang.aria') }}">
           {% for lc in langs %}
           <a href="/lang/{{ lc }}"
-             class="px-1.5 py-0.5 rounded {% if lc == lang %}brand-bg text-white{% else %}text-slate-400 hover:text-slate-700{% endif %}">{{ lang_names[lc] }}</a>
+             lang="{{ lc }}"
+             aria-label="{{ t('lang.' ~ lc ~ '_full') }}"
+             {% if lc == lang %}aria-current="true"{% endif %}
+             class="px-2 py-1 rounded font-medium {% if lc == lang %}brand-bg text-white{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">{{ lang_names[lc] }}</a>
           {% endfor %}
-        </span>
+        </div>
         {% if current_user %}
-          <span class="text-slate-500 hidden md:inline">{{ current_user.full_name }}</span>
+          <span class="text-slate-600 hidden md:inline">{{ current_user.full_name }}</span>
           {% if current_user.role.value == 'resident' %}
-            <a href="/dzivoklis" class="hover:brand-text">{{ t('nav.my_flat') }}</a>
+            <a href="/dzivoklis" class="text-slate-700 hover:brand-text">{{ t('nav.my_flat') }}</a>
           {% elif current_user.role.value == 'manager' %}
-            <a href="/parvalde" class="hover:brand-text">{{ t('nav.management') }}</a>
+            <a href="/parvalde" class="text-slate-700 hover:brand-text">{{ t('nav.management') }}</a>
           {% elif current_user.role.value == 'superadmin' %}
-            <a href="/admin" class="hover:brand-text">{{ t('nav.admin') }}</a>
-            <a href="/admin/inbox" class="hover:brand-text">{{ t('nav.console') }}</a>
+            <a href="/admin" class="text-slate-700 hover:brand-text">{{ t('nav.admin') }}</a>
+            <a href="/admin/inbox" class="text-slate-700 hover:brand-text">{{ t('nav.console') }}</a>
           {% endif %}
-          <a href="/logout" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200">{{ t('nav.logout') }}</a>
+          <a href="/logout" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800">{{ t('nav.logout') }}</a>
         {% else %}
-          <a href="/demo" class="hover:brand-text">{{ t('nav.demo') }}</a>
+          <a href="/demo" class="text-slate-700 hover:brand-text">{{ t('nav.demo') }}</a>
           <a href="/login" class="px-3 py-1.5 rounded-lg brand-bg text-white">{{ t('nav.login') }}</a>
         {% endif %}
       </nav>
@@ -52,27 +69,56 @@
   </header>
 
   {% if messages %}
-  <div class="max-w-6xl mx-auto w-full px-4 mt-4">
+  <div class="max-w-6xl mx-auto w-full px-4 mt-4" role="status" aria-live="polite">
     {% for m in messages %}
     <div class="mb-2 px-4 py-3 rounded-lg text-sm
-      {% if m.level == 'error' %}bg-red-50 text-red-700 border border-red-200
-      {% elif m.level == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200
-      {% else %}bg-sky-50 text-sky-700 border border-sky-200{% endif %}">
+      {% if m.level == 'error' %}bg-red-50 text-red-800 border border-red-200
+      {% elif m.level == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+      {% else %}bg-sky-50 text-sky-800 border border-sky-200{% endif %}">
       {{ m.text }}
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <main class="flex-1 w-full">
+  <main id="main" class="flex-1 w-full" tabindex="-1">
     {% block content %}{% endblock %}
   </main>
 
   <footer class="border-t border-slate-200 bg-white mt-10">
-    <div class="max-w-6xl mx-auto px-4 py-6 text-xs text-slate-400 flex flex-wrap justify-between gap-2">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-xs text-slate-600 flex flex-wrap justify-between gap-x-6 gap-y-2">
       <span>{{ t('footer.copy') }}</span>
+      <span class="flex flex-wrap gap-x-4 gap-y-1">
+        <a href="/privatums" class="hover:brand-text underline">{{ t('nav.privacy') }}</a>
+        <a href="/pieejamiba" class="hover:brand-text underline">{{ t('nav.accessibility') }}</a>
+        <a href="/palidziba" class="hover:brand-text underline">{{ t('nav.help') }}</a>
+      </span>
       <span>{{ t('footer.tagline') }}</span>
     </div>
   </footer>
+
+  <!-- Cookie-уведomление (только необходимые cookie; accessible) -->
+  <div id="cookieNotice" hidden
+       class="fixed bottom-3 inset-x-3 md:left-auto md:right-4 md:max-w-md z-40 bg-white border border-slate-300 rounded-xl shadow-lg p-4"
+       role="region" aria-label="Cookie">
+    <p class="text-sm text-slate-700">{{ t('cookie.text') }}</p>
+    <div class="mt-3 flex items-center gap-3">
+      <button type="button" onclick="acceptCookies()" class="px-4 py-2 rounded-lg brand-bg text-white text-sm font-semibold">{{ t('cookie.ok') }}</button>
+      <a href="/privatums" class="text-sm brand-text underline">{{ t('cookie.more') }}</a>
+    </div>
+  </div>
+  <script>
+    (function(){
+      try {
+        if (!localStorage.getItem('cookieNoticeAck')) {
+          document.getElementById('cookieNotice').hidden = false;
+        }
+      } catch(e){}
+    })();
+    function acceptCookies(){
+      try { localStorage.setItem('cookieNoticeAck','1'); } catch(e){}
+      document.getElementById('cookieNotice').hidden = true;
+    }
+  </script>
 </body>
 </html>

@@ -10,9 +10,9 @@
       </h1>
       <p class="mt-5 text-white/90 text-lg">{{ t('landing.desc') }}</p>
       <div class="mt-8 flex flex-wrap gap-3">
-        <a href="/demo-login?role=resident" class="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100">{{ t('landing.enter_demo') }}</a>
-        <a href="/login" class="px-5 py-3 rounded-xl bg-white/10 border border-white/30 font-semibold hover:bg-white/20">{{ t('nav.login') }}</a>
-        <a href="/palidziba" class="px-5 py-3 rounded-xl bg-white/10 border border-white/30 font-semibold hover:bg-white/20">{{ t('nav.help') }}</a>
+        <a href="/demo-login?role=resident" class="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold shadow hover:bg-slate-100">{{ t('landing.enter_demo') }}</a>
+        <a href="/login" class="px-5 py-3 rounded-xl bg-white/90 text-slate-900 font-semibold hover:bg-white">{{ t('nav.login') }}</a>
+        <a href="/palidziba" class="px-5 py-3 rounded-xl bg-white/90 text-slate-900 font-semibold hover:bg-white">{{ t('nav.help') }}</a>
       </div>
     </div>
   </div>
@@ -48,7 +48,7 @@
           style="border-color: {{ mt.color }}33; background: {{ mt.color }}11;">
       <span>{{ mt.icon }}</span>
       <span class="font-medium">{{ meter_name(mt) }}</span>
-      <span class="text-slate-400 text-sm">{{ mt.unit }}</span>
+      <span class="text-slate-600 text-sm">{{ mt.unit }}</span>
     </span>
     {% endfor %}
   </div>

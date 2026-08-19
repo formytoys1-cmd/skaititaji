@@ -1,0 +1,13 @@
+{
+  "name": "skaititaji-audit",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Автоматические проверки качества: доступность (axe/WCAG) и Lighthouse (mobile).",
+  "scripts": {
+    "a11y": "node a11y.mjs",
+    "lhci": "lhci autorun"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}

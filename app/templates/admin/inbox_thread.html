@@ -2,7 +2,7 @@
 {% block title %}Norādījums #{{ thread.id }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-3xl mx-auto px-4 py-8">
-  <a href="/admin/inbox" class="text-sm text-slate-400 hover:brand-text">← Visi norādījumi</a>
+  <a href="/admin/inbox" class="text-sm text-slate-600 hover:brand-text">← Visi norādījumi</a>
 
   <div class="mt-3 flex items-start justify-between gap-3 flex-wrap">
     <div>
@@ -24,7 +24,7 @@
     <div class="flex {% if m.author.value == 'agent' %}justify-start{% else %}justify-end{% endif %}">
       <div class="max-w-[85%] rounded-2xl px-4 py-3 border
         {% if m.author.value == 'agent' %}bg-slate-50 border-slate-200{% else %}brand-bg text-white border-transparent{% endif %}">
-        <div class="text-xs mb-1 {% if m.author.value == 'agent' %}text-slate-400{% else %}text-white/70{% endif %}">
+        <div class="text-xs mb-1 {% if m.author.value == 'agent' %}text-slate-600{% else %}text-white/70{% endif %}">
           {{ 'Aģents' if m.author.value == 'agent' else 'Moderators' }} · {{ m.created_at.strftime('%Y-%m-%d %H:%M') }}
         </div>
         <div class="whitespace-pre-wrap text-sm">{{ m.body }}</div>
@@ -43,7 +43,7 @@
          class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 hover:border-slate-300 text-sm">
         <span>📄</span>
         <span class="truncate max-w-[220px]">{{ a.filename }}</span>
-        <span class="text-slate-400 text-xs">{{ (a.size / 1024)|round(1) }} KB</span>
+        <span class="text-slate-600 text-xs">{{ (a.size / 1024)|round(1) }} KB</span>
       </a>
       {% endfor %}
     </div>
@@ -54,7 +54,7 @@
   <form method="post" action="/admin/inbox/{{ thread.id }}/reply" enctype="multipart/form-data" class="mt-6">
     <textarea name="body" rows="3" placeholder="Atbilde vai precizējums aģentam..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
     <div class="flex items-center justify-between gap-3 mt-2 flex-wrap">
-      <input type="file" name="files" multiple class="text-xs file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:brand-bg file:text-white">
+      <input type="file" name="files" multiple aria-label="Pievienot failus" class="text-xs file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:brand-bg file:text-white">
       <button class="px-5 py-2.5 rounded-lg brand-bg text-white font-semibold">Sūtīt aģentam</button>
     </div>
   </form>
@@ -62,7 +62,7 @@
   <!-- Смена статуса (отдельная форма) -->
   <form method="post" action="/admin/inbox/{{ thread.id }}/status" class="mt-3 flex items-center gap-2 border-t border-slate-100 pt-4">
     <span class="text-sm text-slate-500">Mainīt statusu:</span>
-    <select name="status" class="text-sm px-3 py-2 rounded-lg border border-slate-300">
+    <select name="status" aria-label="Statuss" class="text-sm px-3 py-2 rounded-lg border border-slate-300">
       <option value="done">Pieņemts (done)</option>
       <option value="rejected">Atcelt (rejected)</option>
       <option value="new">Atkārtoti aģentam (new)</option>

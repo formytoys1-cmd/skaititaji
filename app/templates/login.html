@@ -20,7 +20,8 @@
                  class="w-full px-3 py-2 pr-16 rounded-lg border border-slate-300 focus:brand-border outline-none"
                  placeholder="demo1234">
           <button type="button" id="pwToggle" onclick="togglePw()"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600">
+                  aria-label="{{ t('login.show') }}" aria-pressed="false"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700">
             {{ t('login.show') }}
           </button>
         </div>
@@ -29,7 +30,7 @@
     </form>
 
     <div class="mt-6 pt-6 border-t border-slate-100">
-      <p class="text-xs font-medium text-slate-500 mb-2">{{ t('login.demo_access') }} <code class="bg-slate-100 px-1 rounded">demo1234</code>)</p>
+      <p class="text-xs font-medium text-slate-700 mb-2">{{ t('login.demo_access') }} <code class="bg-slate-100 px-1 rounded text-slate-800">demo1234</code>)</p>
       <div class="grid gap-2">
         <button type="button" onclick="fillLogin('admin@demo.lv')"
           class="text-left px-3 py-2 rounded-lg border border-slate-200 hover:border-brand hover:bg-slate-50 text-sm">
@@ -41,15 +42,15 @@
           class="text-left px-3 py-2 rounded-lg border border-slate-200 hover:border-brand hover:bg-slate-50 text-sm">
           🏠 {{ t('login.role_resident') }} — <code>resident@demo.lv</code></button>
       </div>
-      <p class="text-xs text-slate-400 mt-2">{{ t('login.quick_hint') }}</p>
+      <p class="text-xs text-slate-600 mt-2">{{ t('login.quick_hint') }}</p>
     </div>
 
     <div class="mt-6 pt-6 border-t border-slate-100">
-      <p class="text-xs text-slate-400 mb-2">{{ t('login.planned') }}</p>
-      <div class="flex gap-2 opacity-50">
-        <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-xs">Smart-ID</span>
-        <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-xs">eParaksts</span>
-        <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-xs">Internetbanka</span>
+      <p class="text-xs text-slate-600 mb-2">{{ t('login.planned') }}</p>
+      <div class="flex gap-2 flex-wrap">
+        <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs">Smart-ID</span>
+        <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs">eParaksts</span>
+        <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs">Internetbanka</span>
       </div>
     </div>
     <p class="mt-4 text-sm text-slate-500">{{ t('login.no_account') }} <a href="/palidziba" class="brand-text">{{ t('nav.help') }} →</a></p>
@@ -64,8 +65,8 @@ function fillLogin(email) {
 var PW_SHOW = {{ t('login.show')|tojson }}, PW_HIDE = {{ t('login.hide')|tojson }};
 function togglePw() {
   var p = document.getElementById('password'), b = document.getElementById('pwToggle');
-  if (p.type === 'password') { p.type = 'text'; b.textContent = PW_HIDE; }
-  else { p.type = 'password'; b.textContent = PW_SHOW; }
+  if (p.type === 'password') { p.type = 'text'; b.textContent = PW_HIDE; b.setAttribute('aria-label', PW_HIDE); b.setAttribute('aria-pressed','true'); }
+  else { p.type = 'password'; b.textContent = PW_SHOW; b.setAttribute('aria-label', PW_SHOW); b.setAttribute('aria-pressed','false'); }
 }
 </script>
 {% endblock %}

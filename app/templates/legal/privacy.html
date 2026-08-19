@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ t('privacy.title') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-10 prose-slate">
+  <h1 class="text-3xl font-bold">{{ t('privacy.title') }}</h1>
+  <p class="text-slate-700 mt-3">{{ t('privacy.intro') }}</p>
+
+  <div class="mt-6 space-y-5 text-slate-700 text-sm leading-relaxed">
+    <div>
+      <h2 class="text-lg font-semibold text-slate-900">{{ 'Pārzinis' if lang=='lv' else ('Контролёр данных' if lang=='ru' else 'Data controller') }}</h2>
+      <p>{{ org.legal_name if org and org.legal_name else app_name }}{% if org and org.email %}, {{ org.email }}{% endif %}.</p>
+    </div>
+    <div>
+      <h2 class="text-lg font-semibold text-slate-900">{{ 'Kādus datus apstrādājam' if lang=='lv' else ('Какие данные обрабатываем' if lang=='ru' else 'What data we process') }}</h2>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>{{ 'Konta dati: e-pasts, vārds, loma.' if lang=='lv' else ('Данные аккаунта: e-mail, имя, роль.' if lang=='ru' else 'Account data: e-mail, name, role.') }}</li>
+        <li>{{ 'Skaitītāju rādījumi un ar tiem saistītā informācija.' if lang=='lv' else ('Показания счётчиков и связанная информация.' if lang=='ru' else 'Meter readings and related information.') }}</li>
+        <li>{{ 'Tehniskās sīkdatnes: sesija un valodas izvēle.' if lang=='lv' else ('Технические cookie: сессия и выбор языка.' if lang=='ru' else 'Technical cookies: session and language choice.') }}</li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="text-lg font-semibold text-slate-900">{{ 'Sīkdatnes' if lang=='lv' else ('Cookie' if lang=='ru' else 'Cookies') }}</h2>
+      <p>{{ t('cookie.text') }}</p>
+    </div>
+    <div>
+      <h2 class="text-lg font-semibold text-slate-900">{{ 'Jūsu tiesības (GDPR)' if lang=='lv' else ('Ваши права (GDPR)' if lang=='ru' else 'Your rights (GDPR)') }}</h2>
+      <p>{{ 'Jums ir tiesības piekļūt datiem, tos labot, dzēst, ierobežot apstrādi un iesniegt sūdzību Datu valsts inspekcijai (dvi.gov.lv).' if lang=='lv' else ('Вы вправе получить доступ к данным, исправить, удалить, ограничить обработку и подать жалобу в надзорный орган (в Латвии — dvi.gov.lv).' if lang=='ru' else 'You have the right to access, rectify, erase, restrict processing, and lodge a complaint with the supervisory authority (in Latvia — dvi.gov.lv).') }}</p>
+    </div>
+    <div>
+      <h2 class="text-lg font-semibold text-slate-900">{{ 'Glabāšana' if lang=='lv' else ('Хранение' if lang=='ru' else 'Retention') }}</h2>
+      <p>{{ 'Datus glabājam tik ilgi, cik nepieciešams pakalpojuma sniegšanai un normatīvo aktu prasību izpildei.' if lang=='lv' else ('Данные хранятся столько, сколько необходимо для оказания услуги и выполнения требований законодательства.' if lang=='ru' else 'Data is kept only as long as necessary to provide the service and comply with legal requirements.') }}</p>
+    </div>
+    <p class="text-slate-500">{{ 'Šī ir demonstrācijas versija.' if lang=='lv' else ('Это демонстрационная версия.' if lang=='ru' else 'This is a demo version.') }}</p>
+  </div>
+</section>
+{% endblock %}

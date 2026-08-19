@@ -22,9 +22,9 @@
     ] %}
     {% for label, value, color in cards %}
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
-      <div class="text-slate-400 text-xs uppercase tracking-wide">{{ label }}</div>
+      <div class="text-slate-600 text-xs uppercase tracking-wide">{{ label }}</div>
       <div class="text-3xl font-bold mt-1
-        {% if color=='amber' %}text-amber-600{% elif color=='red' %}text-red-600{% elif color=='brand' %}brand-text{% endif %}">
+        {% if color=='amber' %}text-amber-700{% elif color=='red' %}text-red-700{% elif color=='brand' %}brand-text{% endif %}">
         {{ value }}</div>
     </div>
     {% endfor %}
@@ -54,18 +54,18 @@
           <tr class="{% if r.reading and r.reading.is_anomaly %}bg-amber-50{% endif %}">
             <td class="px-4 py-2">{{ r.unit.number if r.unit }}</td>
             <td class="px-4 py-2">{{ r.type.icon }} {{ r.type.name_lv }}</td>
-            <td class="px-4 py-2 text-slate-400">{{ r.meter.serial_number }}</td>
+            <td class="px-4 py-2 text-slate-600">{{ r.meter.serial_number }}</td>
             <td class="px-4 py-2 text-right">{{ '%.3f'|format(r.reading.value) if r.reading else '—' }}</td>
             <td class="px-4 py-2 text-right">{{ '%.3f'|format(r.reading.consumption) if r.reading and r.reading.consumption is not none else '—' }}</td>
             <td class="px-4 py-2">
               {% if not r.reading %}
-                <span class="text-amber-600">● Gaida</span>
+                <span class="text-amber-700">● Gaida</span>
               {% elif r.reading.is_anomaly %}
-                <span class="text-red-600">⚠ Anomālija</span>
+                <span class="text-red-700">⚠ Anomālija</span>
               {% elif r.reading.status.value == 'synced' %}
-                <span class="text-emerald-600">✓ Sinhronizēts</span>
+                <span class="text-emerald-700">✓ Sinhronizēts</span>
               {% else %}
-                <span class="text-sky-600">✓ Nodots</span>
+                <span class="text-sky-700">✓ Nodots</span>
               {% endif %}
             </td>
           </tr>
@@ -83,16 +83,16 @@
       {% for log in logs %}
       <div class="px-5 py-3 flex items-center justify-between gap-3">
         <div>
-          <span class="{% if log.status=='ok' %}text-emerald-600{% else %}text-red-600{% endif %}">●</span>
+          <span class="{% if log.status=='ok' %}text-emerald-700{% else %}text-red-700{% endif %}">●</span>
           <span class="font-medium">{{ log.action }}</span>
           <span class="text-slate-500">— {{ log.message }}</span>
         </div>
-        <span class="text-slate-400 text-xs">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+        <span class="text-slate-600 text-xs">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
       </div>
       {% endfor %}
     </div>
     {% else %}
-    <div class="px-5 py-6 text-slate-400 text-sm">Vēl nav sinhronizāciju.</div>
+    <div class="px-5 py-6 text-slate-600 text-sm">Vēl nav sinhronizāciju.</div>
     {% endif %}
   </div>
 </section>
