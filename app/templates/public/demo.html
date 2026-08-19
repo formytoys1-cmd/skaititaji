@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Demo — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 py-12">
+  <h1 class="text-3xl font-bold">Demo piekļuve</h1>
+  <p class="text-slate-500 mt-2">
+    Izmēģiniet platformu ar sagatavotiem demo datiem organizācijai
+    <strong>{{ demo_org.name if demo_org else 'Demo Namu Pārvalde' }}</strong>.
+    Visi konti izmanto paroli <code class="bg-slate-100 px-1.5 py-0.5 rounded">demo1234</code>.
+  </p>
+
+  <div class="grid md:grid-cols-3 gap-4 mt-8">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <div class="text-2xl">🏠</div>
+      <h3 class="font-semibold mt-2">Iedzīvotājs</h3>
+      <p class="text-slate-500 text-sm mt-1">Nodod sava dzīvokļa ūdens rādījumus.</p>
+      <p class="mt-3 text-sm"><span class="text-slate-400">E-pasts:</span><br>
+        <code>resident@demo.lv</code></p>
+      <a href="/login" class="mt-4 inline-block px-4 py-2 rounded-lg brand-bg text-white text-sm">Ieeja kā iedzīvotājs</a>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <div class="text-2xl">🧑‍💼</div>
+      <h3 class="font-semibold mt-2">Apsaimniekotājs</h3>
+      <p class="text-slate-500 text-sm mt-1">Kontrolē nodošanu, anomālijas, sinhronizē ar Visma Horizon.</p>
+      <p class="mt-3 text-sm"><span class="text-slate-400">E-pasts:</span><br>
+        <code>manager@demo.lv</code></p>
+      <a href="/login" class="mt-4 inline-block px-4 py-2 rounded-lg brand-bg text-white text-sm">Ieeja kā vadītājs</a>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <div class="text-2xl">⚙️</div>
+      <h3 class="font-semibold mt-2">Platformas admins</h3>
+      <p class="text-slate-500 text-sm mt-1">Organizācijas un skaitītāju tipu katalogs.</p>
+      <p class="mt-3 text-sm"><span class="text-slate-400">E-pasts:</span><br>
+        <code>admin@demo.lv</code></p>
+      <a href="/login" class="mt-4 inline-block px-4 py-2 rounded-lg brand-bg text-white text-sm">Ieeja kā admins</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

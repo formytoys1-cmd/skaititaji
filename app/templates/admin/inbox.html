@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Moderatora konsole — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h1 class="text-2xl font-bold">Moderatora konsole</h1>
+      <p class="text-slate-500 text-sm">Nosūtiet norādījumus aģentam pilnai vai daļējai vietnes pārstrādei. Aģents atbild šeit.</p>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6 mt-6">
+    <!-- Форма нового указания -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-5">
+      <div class="font-semibold mb-1">Jauns norādījums</div>
+      <p class="text-xs text-slate-400 mb-4">Aizpildiet un nosūtiet — aģents saņems paziņojumu.</p>
+      <form method="post" action="/admin/inbox" class="space-y-3 text-sm">
+        <input name="title" required placeholder="Virsraksts (īss)" class="w-full px-3 py-2 rounded-lg border border-slate-300">
+        <div class="flex gap-2">
+          <select name="scope" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300">
+            <option value="partial">Daļēja pārstrāde</option>
+            <option value="full">Pilna pārstrāde</option>
+            <option value="bug">Kļūdas labojums</option>
+            <option value="idea">Ideja / priekšlikums</option>
+          </select>
+          <select name="priority" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300">
+            <option value="normal">Prioritāte: parasta</option>
+            <option value="high">Prioritāte: augsta</option>
+            <option value="low">Prioritāte: zema</option>
+          </select>
+        </div>
+        <input name="area" placeholder="Zona / lapa (piem. iedzīvotāja panelis)" class="w-full px-3 py-2 rounded-lg border border-slate-300">
+        <textarea name="body" required rows="6" placeholder="Detalizēti aprakstiet, ko izmainīt..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
+        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Nosūtīt aģentam</button>
+      </form>
+    </div>
+
+    <!-- Список тредов -->
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div class="px-5 py-3 border-b border-slate-200 font-semibold">Norādījumi ({{ rows|length }})</div>
+      {% if not rows %}
+        <div class="px-5 py-8 text-center text-slate-400 text-sm">Vēl nav norādījumu. Izveidojiet pirmo pa kreisi.</div>
+      {% else %}
+      <div class="divide-y divide-slate-100">
+        {% for r in rows %}
+        <a href="/admin/inbox/{{ r.thread.id }}" class="block px-5 py-3 hover:bg-slate-50">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="font-medium truncate">#{{ r.thread.id }} · {{ r.thread.title }}</div>
+              <div class="text-xs text-slate-400 truncate">
+                {{ r.thread.scope.value }}
+                {% if r.thread.priority == 'high' %}· <span class="text-red-500">augsta prioritāte</span>{% endif %}
+                {% if r.thread.area %}· {{ r.thread.area }}{% endif %}
+                · {{ r.count }} ziņas
+                {% if r.last %}· pēdējais: {{ r.last.author.value }}{% endif %}
+              </div>
+            </div>
+            {% set label, color = r.status_label %}
+            <span class="shrink-0 px-2.5 py-1 rounded-full text-xs
+              bg-{{ color }}-50 text-{{ color }}-700 border border-{{ color }}-200">{{ label }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

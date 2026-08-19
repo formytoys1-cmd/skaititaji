@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} — {{ app_tagline }}{% endblock %}
+{% block content %}
+<section class="brand-bg text-white">
+  <div class="max-w-6xl mx-auto px-4 py-16 md:py-24">
+    <div class="max-w-2xl">
+      <p class="uppercase tracking-widest text-white/70 text-xs mb-3">Ūdens · Siltums · Enerģija</p>
+      <h1 class="text-4xl md:text-5xl font-bold leading-tight">
+        Skaitītāju rādījumu nodošana — ērti, ātri, caurspīdīgi
+      </h1>
+      <p class="mt-5 text-white/90 text-lg">
+        Platforma dzīvokļu īpašniekiem un apsaimniekotājiem. Nododiet aukstā un
+        karstā ūdens rādījumus dažās sekundēs. Viegli pievienojami jauni skaitītāju
+        tipi un jebkura organizācija. Integrācija ar <strong>Visma Horizon</strong>.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/demo" class="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100">Izmēģināt demo →</a>
+        <a href="/login" class="px-5 py-3 rounded-xl bg-white/10 border border-white/30 font-semibold hover:bg-white/20">Ieeja</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 py-14">
+  <h2 class="text-2xl font-bold mb-2">Kāpēc šī platforma</h2>
+  <p class="text-slate-500 mb-8">Balstīta uz Latvijas tirgus un likumdošanas analīzi.</p>
+  <div class="grid md:grid-cols-3 gap-5">
+    {% set features = [
+      ("🧩", "Jebkurš skaitītāja tips", "Konfigurējami skaitītāju tipi — ūdens, elektrība, gāze, siltums. Jauns tips = viens ieraksts, bez koda izmaiņām."),
+      ("🏢", "Daudznomnieku (multi-tenant)", "Katra organizācija (apsaimniekotājs, kooperatīvs, ūdenssaimniecība) — atsevišķa telpa ar savu zīmolu un iestatījumiem."),
+      ("🔌", "Visma Horizon integrācija", "Rādījumi automātiski nonāk grāmatvedības sistēmā (NĪP/KNS moduļi) bez manuālas ievades."),
+      ("📊", "Vadītāja panelis", "Redziet, cik rādījumu nodoti, kuri vēl nav, patēriņa anomālijas un parādnieki."),
+      ("🔐", "Droša autorizācija", "Sagatavots Smart-ID / eParaksts / banku autentifikācijai (eIDAS)."),
+      ("🌍", "LV / RU / EN", "Daudzvalodu saskarne, kas svarīga Latvijas kontekstā."),
+    ] %}
+    {% for icon, title, desc in features %}
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <div class="text-3xl">{{ icon }}</div>
+      <h3 class="font-semibold mt-3">{{ title }}</h3>
+      <p class="text-slate-500 text-sm mt-1">{{ desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 pb-16">
+  <h2 class="text-2xl font-bold mb-6">Atbalstītie skaitītāju tipi</h2>
+  <div class="flex flex-wrap gap-3">
+    {% for t in meter_types %}
+    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border"
+          style="border-color: {{ t.color }}33; background: {{ t.color }}11;">
+      <span>{{ t.icon }}</span>
+      <span class="font-medium">{{ t.name_lv }}</span>
+      <span class="text-slate-400 text-sm">{{ t.unit }}</span>
+    </span>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

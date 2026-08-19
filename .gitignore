@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Данные и логи
+data/
+*.db
+*.log
+
+# Окружение
+.env
+
+# ОС/редактор
+.DS_Store
+.idea/
+.vscode/

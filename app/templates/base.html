@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { brand: "{{ brand_color|default('#0ea5e9') }}" } } } }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; }
+    .brand-bg { background-color: {{ brand_color|default('#0ea5e9') }}; }
+    .brand-text { color: {{ brand_color|default('#0ea5e9') }}; }
+    .brand-border { border-color: {{ brand_color|default('#0ea5e9') }}; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 font-semibold">
+        <span class="w-8 h-8 rounded-lg brand-bg text-white flex items-center justify-center">💧</span>
+        <span>{{ org.logo_text if org else app_name }}</span>
+      </a>
+      <nav class="flex items-center gap-4 text-sm">
+        {% if current_user %}
+          <span class="text-slate-500 hidden sm:inline">{{ current_user.full_name }}</span>
+          {% if current_user.role.value == 'resident' %}
+            <a href="/dzivoklis" class="hover:brand-text">Mans dzīvoklis</a>
+          {% elif current_user.role.value == 'manager' %}
+            <a href="/parvalde" class="hover:brand-text">Pārvalde</a>
+          {% elif current_user.role.value == 'superadmin' %}
+            <a href="/admin" class="hover:brand-text">Admin</a>
+            <a href="/admin/inbox" class="hover:brand-text">Konsole</a>
+          {% endif %}
+          <a href="/logout" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200">Iziet</a>
+        {% else %}
+          <a href="/demo" class="hover:brand-text">Demo</a>
+          <a href="/login" class="px-3 py-1.5 rounded-lg brand-bg text-white">Ieeja</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  {% if messages %}
+  <div class="max-w-6xl mx-auto w-full px-4 mt-4">
+    {% for m in messages %}
+    <div class="mb-2 px-4 py-3 rounded-lg text-sm
+      {% if m.level == 'error' %}bg-red-50 text-red-700 border border-red-200
+      {% elif m.level == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+      {% else %}bg-sky-50 text-sky-700 border border-sky-200{% endif %}">
+      {{ m.text }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="flex-1 w-full">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white mt-10">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-xs text-slate-400 flex flex-wrap justify-between gap-2">
+      <span>© {{ app_name }} — demo. Integrācija: Visma Horizon REST API.</span>
+      <span>Skaitītāju rādījumu nodošanas platforma</span>
+    </div>
+  </footer>
+</body>
+</html>
