@@ -31,17 +31,18 @@ from app.models import (
     User,
     UserRole,
 )
-from app.web import flash, render
+from app.web import current_lang, flash, render
+from app.i18n import t as i18n_t
 
 router = APIRouter()
 
 STATUS_LABELS = {
-    FeedbackStatus.NEW: ("Jauns", "amber"),
-    FeedbackStatus.IN_PROGRESS: ("Darbā", "sky"),
-    FeedbackStatus.NEEDS_CLARIFICATION: ("Gaida precizējumu", "purple"),
-    FeedbackStatus.READY_FOR_REVIEW: ("Pārbaudei", "emerald"),
-    FeedbackStatus.DONE: ("Pabeigts", "slate"),
-    FeedbackStatus.REJECTED: ("Atcelts", "red"),
+    FeedbackStatus.NEW: ("inbox.st_new", "amber"),
+    FeedbackStatus.IN_PROGRESS: ("inbox.st_in_progress", "sky"),
+    FeedbackStatus.NEEDS_CLARIFICATION: ("inbox.st_needs_clarification", "purple"),
+    FeedbackStatus.READY_FOR_REVIEW: ("inbox.st_ready", "emerald"),
+    FeedbackStatus.DONE: ("inbox.st_done", "slate"),
+    FeedbackStatus.REJECTED: ("inbox.st_rejected", "red"),
 }
 
 
@@ -121,8 +122,9 @@ async def create(
     first_msg = messages_for(session, thread.id)
     msg_id = first_msg[0].id if first_msg else None
     n = await _save_uploads(session, thread.id, msg_id, files)
-    suffix = f" (+{n} fails)" if n else ""
-    flash(request, f"Norādījums #{thread.id} nosūtīts aģentam{suffix}.", "success")
+    lang = current_lang(request)
+    suffix = f" (+{n} {i18n_t(lang, 'inbox.flash_files')})" if n else ""
+    flash(request, f"{i18n_t(lang, 'inbox.flash_created')} #{thread.id}{suffix}.", "success")
     return RedirectResponse(f"/admin/inbox/{thread.id}", 303)
 
 
@@ -137,7 +139,7 @@ def thread_view(
         return RedirectResponse("/", 303)
     thread = session.get(FeedbackThread, thread_id)
     if not thread:
-        flash(request, "Norādījums nav atrasts.", "error")
+        flash(request, i18n_t(current_lang(request), "inbox.flash_not_found"), "error")
         return RedirectResponse("/admin/inbox", 303)
     return render(
         request, "admin/inbox_thread.html",
@@ -195,8 +197,9 @@ async def reply(
         msg_id = msg.id
     n = await _save_uploads(session, thread_id, msg_id, files)
     if body.strip() or n:
-        extra = f" (+{n} fails)" if n else ""
-        flash(request, f"Ziņa nosūtīta aģentam{extra}.", "success")
+        lang = current_lang(request)
+        extra = f" (+{n} {i18n_t(lang, 'inbox.flash_files')})" if n else ""
+        flash(request, f"{i18n_t(lang, 'inbox.flash_msg_sent')}{extra}.", "success")
     return RedirectResponse(f"/admin/inbox/{thread_id}", 303)
 
 
@@ -231,7 +234,10 @@ def change_status(
     try:
         st = FeedbackStatus(status)
         set_status(session, thread_id, st)
-        flash(request, f"Statuss mainīts: {STATUS_LABELS.get(st, (status,))[0]}.", "success")
+        lang = current_lang(request)
+        label_key = STATUS_LABELS.get(st, ("", ""))[0]
+        label = i18n_t(lang, label_key) if label_key else status
+        flash(request, f"{i18n_t(lang, 'inbox.flash_status_changed')}: {label}.", "success")
     except ValueError:
-        flash(request, "Nederīgs statuss.", "error")
+        flash(request, i18n_t(current_lang(request), "inbox.flash_bad_status"), "error")
     return RedirectResponse(f"/admin/inbox/{thread_id}", 303)

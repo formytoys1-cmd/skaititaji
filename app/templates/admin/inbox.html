@@ -1,36 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Moderatora konsole — {{ app_name }}{% endblock %}
+{% block title %}{{ t('inbox.console_title') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-6xl mx-auto px-4 py-8">
   <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
-      <h1 class="text-2xl font-bold">Moderatora konsole</h1>
-      <p class="text-slate-500 text-sm">Nosūtiet norādījumus aģentam pilnai vai daļējai vietnes pārstrādei. Aģents atbild šeit.</p>
+      <h1 class="text-2xl font-bold">{{ t('inbox.console_title') }}</h1>
+      <p class="text-slate-500 text-sm">{{ t('inbox.console_sub') }}</p>
     </div>
   </div>
 
   <div class="grid lg:grid-cols-3 gap-6 mt-6">
     <!-- Форма нового указания -->
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
-      <div class="font-semibold mb-1">Jauns norādījums</div>
-      <p class="text-xs text-slate-600 mb-4">Aizpildiet un nosūtiet — aģents saņems paziņojumu.</p>
+      <div class="font-semibold mb-1">{{ t('inbox.new_instruction') }}</div>
+      <p class="text-xs text-slate-600 mb-4">{{ t('inbox.form_hint') }}</p>
       <form method="post" action="/admin/inbox" enctype="multipart/form-data" class="space-y-3 text-sm">
-        <input name="title" required placeholder="Virsraksts (īss)" class="w-full px-3 py-2 rounded-lg border border-slate-300">
+        <input name="title" required placeholder="{{ t('inbox.title_ph') }}" class="w-full px-3 py-2 rounded-lg border border-slate-300">
         <div class="flex gap-2">
-          <select name="scope" aria-label="Veids" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300">
-            <option value="partial">Daļēja pārstrāde</option>
-            <option value="full">Pilna pārstrāde</option>
-            <option value="bug">Kļūdas labojums</option>
-            <option value="idea">Ideja / priekšlikums</option>
+          <select name="scope" aria-label="{{ t('inbox.kind') }}" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300">
+            <option value="partial">{{ t('inbox.scope_partial') }}</option>
+            <option value="full">{{ t('inbox.scope_full') }}</option>
+            <option value="bug">{{ t('inbox.scope_bug') }}</option>
+            <option value="idea">{{ t('inbox.scope_idea') }}</option>
           </select>
-          <select name="priority" aria-label="Prioritāte" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300">
-            <option value="normal">Prioritāte: parasta</option>
-            <option value="high">Prioritāte: augsta</option>
-            <option value="low">Prioritāte: zema</option>
+          <select name="priority" aria-label="{{ t('inbox.priority') }}" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300">
+            <option value="normal">{{ t('inbox.prio_normal') }}</option>
+            <option value="high">{{ t('inbox.prio_high') }}</option>
+            <option value="low">{{ t('inbox.prio_low') }}</option>
           </select>
         </div>
-        <input name="area" placeholder="Zona / lapa (piem. iedzīvotāja panelis)" class="w-full px-3 py-2 rounded-lg border border-slate-300">
-        <textarea name="body" required rows="6" placeholder="Detalizēti aprakstiet, ko izmainīt..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
+        <input name="area" placeholder="{{ t('inbox.area_ph') }}" class="w-full px-3 py-2 rounded-lg border border-slate-300">
+        <textarea name="body" required rows="6" placeholder="{{ t('inbox.body_ph') }}" class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
         <div>
           <label class="block text-xs text-slate-500 mb-1">📎 {{ t('inbox.attach_hint') }}</label>
           <div class="flex items-center gap-3 flex-wrap">
@@ -45,15 +45,15 @@
             <span class="file-name text-xs text-slate-600">{{ t('inbox.no_file') }}</span>
           </div>
         </div>
-        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Nosūtīt aģentam</button>
+        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">{{ t('inbox.send') }}</button>
       </form>
     </div>
 
     <!-- Список тредов -->
     <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <div class="px-5 py-3 border-b border-slate-200 font-semibold">Norādījumi ({{ rows|length }})</div>
+      <div class="px-5 py-3 border-b border-slate-200 font-semibold">{{ t('inbox.threads') }} ({{ rows|length }})</div>
       {% if not rows %}
-        <div class="px-5 py-8 text-center text-slate-600 text-sm">Vēl nav norādījumu. Izveidojiet pirmo pa kreisi.</div>
+        <div class="px-5 py-8 text-center text-slate-600 text-sm">{{ t('inbox.no_threads') }}</div>
       {% else %}
       <div class="divide-y divide-slate-100">
         {% for r in rows %}
@@ -63,16 +63,16 @@
               <div class="font-medium truncate">#{{ r.thread.id }} · {{ r.thread.title }}</div>
               <div class="text-xs text-slate-600 truncate">
                 {{ r.thread.scope.value }}
-                {% if r.thread.priority == 'high' %}· <span class="text-red-500">augsta prioritāte</span>{% endif %}
+                {% if r.thread.priority == 'high' %}· <span class="text-red-500">{{ t('inbox.high_priority') }}</span>{% endif %}
                 {% if r.thread.area %}· {{ r.thread.area }}{% endif %}
-                · {{ r.count }} ziņas
+                · {{ r.count }} {{ t('inbox.msg_count') }}
                 {% if r.attachments %}· 📎 {{ r.attachments }}{% endif %}
-                {% if r.last %}· pēdējais: {{ r.last.author.value }}{% endif %}
+                {% if r.last %}· {{ t('inbox.last') }}: {{ t('inbox.author_agent') if r.last.author.value == 'agent' else t('inbox.author_moderator') }}{% endif %}
               </div>
             </div>
-            {% set label, color = r.status_label %}
+            {% set label_key, color = r.status_label %}
             <span class="shrink-0 px-2.5 py-1 rounded-full text-xs
-              bg-{{ color }}-50 text-{{ color }}-700 border border-{{ color }}-200">{{ label }}</span>
+              bg-{{ color }}-50 text-{{ color }}-700 border border-{{ color }}-200">{{ t(label_key) }}</span>
           </div>
         </a>
         {% endfor %}
@@ -82,3 +82,4 @@
   </div>
 </section>
 {% endblock %}
+
