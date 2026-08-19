@@ -1,0 +1,60 @@
+name: quality-gates
+# Автоматический контроль качества: доступность (WCAG 2.2 AA) + Lighthouse (mobile).
+# Запускается на каждый push/PR и еженедельно (чтобы ловить регрессии и следить
+# за обновлениями инструментов/стандартов).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"   # понедельник, 06:00 UTC — еженедельная проверка live
+  workflow_dispatch: {}
+
+jobs:
+  accessibility:
+    name: Accessibility (axe / WCAG 2.2 AA)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Install app deps
+        run: pip install -r requirements.txt
+      - name: Start app
+        run: |
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/api/health && break || sleep 1
+          done
+      - name: Install audit deps
+        working-directory: tools/audit
+        run: |
+          npm install playwright@1.48.0
+          npx playwright install --with-deps chromium
+      - name: Run axe accessibility gate
+        working-directory: tools/audit
+        env:
+          BASE_URL: http://127.0.0.1:8000
+        run: node a11y.mjs
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report
+          path: tools/audit/a11y-report.json
+
+  lighthouse:
+    name: Lighthouse (mobile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Run Lighthouse CI against live site
+        env:
+          LHCI_URL: https://skaititaji.onrender.com
+        run: |
+          npm install -g @lhci/cli@0.14.x
+          lhci autorun --config=tools/audit/lighthouserc.cjs || true
