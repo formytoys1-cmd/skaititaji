@@ -72,6 +72,7 @@ def render(
         "t": lambda key: t(lang, key),
         "meter_name": lambda mt: meter_name(mt, lang),
         "announcement": _announcement(org, lang),
+        "today": __import__("datetime").date.today(),
     }
     if context:
         ctx.update(context)

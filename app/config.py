@@ -21,6 +21,10 @@ class Settings:
         self.default_locale: str = os.getenv("DEFAULT_LOCALE", "lv")
         self.debug: bool = os.getenv("DEBUG", "1") == "1"
 
+        # Ключ для защищённого API агента (удалённое чтение/ответы в консоли
+        # обратной связи). Если пустой — эндпоинты /agent/api отключены.
+        self.agent_api_key: str = os.getenv("AGENT_API_KEY", "")
+
         # Интеграция с Visma Horizon REST API.
         # По умолчанию используется mock-режим, чтобы демо работало без реального сервера.
         self.visma_base_url: str = os.getenv("VISMA_BASE_URL", "")

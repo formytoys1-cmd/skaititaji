@@ -201,6 +201,12 @@ T: dict[str, dict[str, str]] = {
     "res.less": {"lv": "Mazāks par iepriekšējo", "ru": "Меньше предыдущего",
                  "en": "Lower than previous"},
     "res.anomaly": {"lv": "Anomālija", "ru": "Аномалия", "en": "Anomaly"},
+    "res.verified_until": {"lv": "Verificēts līdz", "ru": "Поверка до",
+                           "en": "Verified until"},
+    "res.verify_soon": {"lv": "drīz jāverificē", "ru": "скоро поверка",
+                        "en": "verification due soon"},
+    "res.verify_expired": {"lv": "verifikācija beigusies",
+                           "ru": "поверка истекла", "en": "verification expired"},
     # ---- Помощь / мануалы ------------------------------------------------ #
     "help.title": {"lv": "Palīdzība un pamācības", "ru": "Помощь и инструкции",
                    "en": "Help & manuals"},

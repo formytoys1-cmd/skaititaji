@@ -174,6 +174,52 @@ def seed_demo(reset: bool = False) -> None:
                                      relation="owner"))
             session.commit()
 
+        # --- Реалистичная квартира по образцу реального счёта -------------- #
+        # DzĪKS "Ozols-27", Īslīces iela 3, dz. 27: 4 счётчика ХВС + 4 ГВС.
+        real_unit = session.exec(
+            select(Unit).where(Unit.account_number == "Īs-3-0027")
+        ).first()
+        if not real_unit:
+            real_unit = Unit(
+                building_id=building.id, number="27",
+                account_number="Īs-3-0027", area_m2=150.20, residents_count=1,
+                external_id="HZ-UNIT-27",
+            )
+            session.add(real_unit)
+            session.commit()
+            session.refresh(real_unit)
+
+            # Реальные серийные номера и начальные показания со счёта (m³)
+            cold_meters = [("015206", 356.1), ("104928", 644.0),
+                           ("724228", 501.5), ("797483", 164.2)]
+            hot_meters = [("083997", 312.9), ("143182", 389.1),
+                          ("514058", 636.0), ("262036", 239.6)]
+            ver = date(2029, 3, 18)  # dēr.līdz 18.03.29 со счёта
+            for sn, val in cold_meters:
+                session.add(Meter(
+                    unit_id=real_unit.id, meter_type_id=types["cold_water"].id,
+                    serial_number=sn, location="Dzīvoklis", initial_value=val,
+                    verification_due=ver, external_id=f"HZ-M-{sn}"))
+            for sn, val in hot_meters:
+                session.add(Meter(
+                    unit_id=real_unit.id, meter_type_id=types["hot_water"].id,
+                    serial_number=sn, location="Dzīvoklis", initial_value=val,
+                    verification_due=ver, external_id=f"HZ-M-{sn}"))
+            session.commit()
+
+            realres = User(
+                organization_id=org.id, email="ozols27@demo.lv",
+                full_name="Sergejs Pivčaikins",
+                password_hash=hash_password("demo1234"),
+                role=UserRole.RESIDENT, locale="lv",
+            )
+            session.add(realres)
+            session.commit()
+            session.refresh(realres)
+            session.add(UnitResident(user_id=realres.id, unit_id=real_unit.id,
+                                     relation="owner"))
+            session.commit()
+
         # --- Управляющий и суперадмин ------------------------------------- #
         session.add(User(
             organization_id=org.id, email="manager@demo.lv",

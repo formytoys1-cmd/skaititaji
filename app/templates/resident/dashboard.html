@@ -45,6 +45,14 @@
             <div class="font-medium">{{ meter_name(m.type) }}</div>
             <div class="text-xs text-slate-600">Nr. {{ m.meter.serial_number }}
               {% if m.meter.location %}· {{ m.meter.location }}{% endif %}</div>
+            {% if m.meter.verification_due %}
+              {% set days_left = (m.meter.verification_due - today).days %}
+              <div class="text-xs mt-0.5 {% if days_left < 0 %}text-red-700{% elif days_left < 90 %}text-amber-700{% else %}text-slate-500{% endif %}">
+                {{ t('res.verified_until') }}: {{ m.meter.verification_due.strftime('%Y-%m-%d') }}
+                {% if days_left < 0 %}<span class="font-medium">({{ t('res.verify_expired') }})</span>
+                {% elif days_left < 90 %}<span class="font-medium">({{ t('res.verify_soon') }})</span>{% endif %}
+              </div>
+            {% endif %}
           </div>
           <div class="text-sm text-slate-500 text-right">
             <div>{{ t('res.prev') }}: <strong>{{ '%.3f'|format(m.prev_value) }}</strong> {{ m.type.unit }}</div>

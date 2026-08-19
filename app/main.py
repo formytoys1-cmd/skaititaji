@@ -14,7 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.database import get_session, init_db
 from app.models import MeterType, Organization
-from app.routers import admin, auth, manager, management, moderator, public, resident
+from app.routers import admin, agent_api, auth, manager, management, moderator, public, resident
 from app.seed import seed_demo
 
 
@@ -117,6 +117,7 @@ app.include_router(manager.router)
 app.include_router(management.router)
 app.include_router(admin.router)
 app.include_router(moderator.router)
+app.include_router(agent_api.router)
 
 
 # Кастомная 404-страница (брендированная, 3 языка).
