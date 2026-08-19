@@ -1,6 +1,7 @@
 """Точка входа FastAPI-приложения «Skaitītāji»."""
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -24,6 +25,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, max_age=60 * 60 * 8)
+
+# Гарантируем наличие каталога статики (пустые папки git не хранит — на свежем
+# клоне их может не быть). Без этого StaticFiles упал бы при старте.
+os.makedirs("app/static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(public.router)
