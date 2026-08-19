@@ -71,10 +71,13 @@ def add_message(
     thread = session.get(FeedbackThread, thread_id)
     if thread:
         thread.updated_at = datetime.utcnow()
-        # Ответ модератора возвращает тред в работу к агенту
+        # Ответ модератора возвращает тред в работу к агенту — даже если тред
+        # был закрыт (done/rejected): новое сообщение снова требует внимания.
         if author == FeedbackAuthor.MODERATOR and thread.status in (
             FeedbackStatus.NEEDS_CLARIFICATION,
             FeedbackStatus.READY_FOR_REVIEW,
+            FeedbackStatus.DONE,
+            FeedbackStatus.REJECTED,
         ):
             thread.status = FeedbackStatus.IN_PROGRESS
         session.add(thread)

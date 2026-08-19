@@ -68,8 +68,15 @@
 
   <!-- Переписка: новые сообщения сверху, история — вниз -->
   <div class="mt-6 border-t border-slate-100 pt-4">
-    <div class="text-xs text-slate-500 mb-3">↓ {{ t('inbox.newest_top') }}</div>
-    <div class="space-y-3">
+    <div class="flex items-center justify-between mb-3">
+      <div class="text-xs text-slate-500">↓ {{ t('inbox.newest_top') }}</div>
+      <div id="newReplyBadge" hidden class="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 font-medium">● {{ t('inbox.new_reply') }}</div>
+    </div>
+    <div id="conversation" class="space-y-3"
+         data-thread="{{ thread.id }}"
+         data-agent-label="{{ t('inbox.author_agent') }}"
+         data-moderator-label="{{ t('inbox.author_moderator') }}"
+         data-last-id="{{ messages[-1].id if messages else 0 }}">
       {% for m in messages|reverse %}
       <div class="flex {% if m.author.value == 'agent' %}justify-start{% else %}justify-end{% endif %}">
         <div class="max-w-[85%] rounded-2xl px-4 py-3 border
@@ -85,5 +92,61 @@
   </div>
 
 </section>
+
+<script>
+// Авто-обновление переписки консоли без перезагрузки страницы.
+(function(){
+  var box = document.getElementById('conversation');
+  if (!box) return;
+  var tid = box.dataset.thread;
+  var lastId = parseInt(box.dataset.lastId || '0', 10);
+  var agentLabel = box.dataset.agentLabel, modLabel = box.dataset.moderatorLabel;
+  var badge = document.getElementById('newReplyBadge');
+  var baseTitle = document.title;
+  var unseen = 0;
+
+  function esc(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  function bubble(m){
+    var isAgent = m.author === 'agent';
+    var wrap = document.createElement('div');
+    wrap.className = 'flex ' + (isAgent ? 'justify-start' : 'justify-end');
+    wrap.innerHTML =
+      '<div class="max-w-[85%] rounded-2xl px-4 py-3 border ' +
+      (isAgent ? 'bg-slate-50 border-slate-200' : 'brand-bg text-white border-transparent') + '">' +
+      '<div class="text-xs mb-1 ' + (isAgent ? 'text-slate-600' : 'text-white/70') + '">' +
+      esc(isAgent ? agentLabel : modLabel) + ' · ' + esc(m.at) + '</div>' +
+      '<div class="whitespace-pre-wrap text-sm">' + esc(m.body) + '</div></div>';
+    return wrap;
+  }
+
+  function poll(){
+    fetch('/admin/inbox/' + tid + '/messages', { headers: { 'X-Requested-With': 'fetch' } })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if (!data || !data.messages) return;
+        var fresh = data.messages.filter(function(m){ return m.id > lastId; });
+        if (!fresh.length) return;
+        fresh.forEach(function(m){
+          box.insertBefore(bubble(m), box.firstChild); // новые сверху
+          lastId = Math.max(lastId, m.id);
+          if (m.author === 'agent') unseen++;
+        });
+        if (unseen > 0 && badge) {
+          badge.hidden = false;
+          document.title = '(' + unseen + ') ' + baseTitle;
+        }
+      })
+      .catch(function(){});
+  }
+
+  // Сбросить индикатор, когда пользователь вернулся на вкладку
+  window.addEventListener('focus', function(){
+    unseen = 0; if (badge) badge.hidden = true; document.title = baseTitle;
+  });
+
+  setInterval(poll, 10000); // каждые 10 секунд
+})();
+</script>
 {% endblock %}
 

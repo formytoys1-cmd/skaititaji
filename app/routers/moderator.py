@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from sqlmodel import Session
 
 from app.auth import require_user
@@ -149,6 +149,33 @@ def thread_view(
         },
         current_user=user,
     )
+
+
+@router.get("/admin/inbox/{thread_id}/messages")
+def thread_messages(
+    thread_id: int,
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+):
+    """JSON переписки треда для авто-обновления консоли без перезагрузки."""
+    if not _guard(user):
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+    thread = session.get(FeedbackThread, thread_id)
+    if not thread:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    msgs = messages_for(session, thread_id)
+    return JSONResponse({
+        "status": thread.status.value,
+        "messages": [
+            {
+                "id": m.id,
+                "author": m.author.value,
+                "at": m.created_at.strftime("%Y-%m-%d %H:%M"),
+                "body": m.body,
+            }
+            for m in msgs
+        ],
+    })
 
 
 @router.post("/admin/inbox/{thread_id}/reply")

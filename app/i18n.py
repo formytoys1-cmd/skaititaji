@@ -236,6 +236,8 @@ T: dict[str, dict[str, str]] = {
     "inbox.author_agent": {"lv": "Aģents", "ru": "Агент", "en": "Agent"},
     "inbox.author_moderator": {"lv": "Moderators", "ru": "Модератор",
                                "en": "Moderator"},
+    "inbox.new_reply": {"lv": "Jauna aģenta atbilde!", "ru": "Новый ответ агента!",
+                        "en": "New agent reply!"},
     # ---- История и график (B) -------------------------------------------- #
     "res.history": {"lv": "Rādījumu vēsture", "ru": "История показаний",
                     "en": "Reading history"},
