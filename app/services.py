@@ -142,6 +142,75 @@ def meters_for_unit(session: Session, unit_id: int) -> list[Meter]:
     )
 
 
+def readings_history(
+    session: Session, meter_id: int, limit: int = 12
+) -> list[Reading]:
+    """Последние показания счётчика по возрастанию периода (для истории/графика)."""
+    rows = session.exec(
+        select(Reading)
+        .where(Reading.meter_id == meter_id)
+        .order_by(Reading.period.desc(), Reading.id.desc())
+    ).all()
+    rows = list(rows)[:limit]
+    rows.reverse()  # по возрастанию: старые → новые
+    return rows
+
+
+def average_consumption(
+    session: Session, meter_id: int, months: int = 12
+) -> Optional[float]:
+    """Среднемесячный расход за последние N месяцев (норма §41).
+
+    Учитываются только реальные (не расчётные) показания с положительным
+    расходом. Возвращает None, если истории недостаточно.
+    """
+    rows = session.exec(
+        select(Reading)
+        .where(
+            Reading.meter_id == meter_id,
+            Reading.source != ReadingSource.ESTIMATED,
+        )
+        .order_by(Reading.period.desc(), Reading.id.desc())
+    ).all()
+    values = [
+        r.consumption for r in list(rows)[:months]
+        if r.consumption is not None and r.consumption >= 0
+    ]
+    if not values:
+        return None
+    return round(sum(values) / len(values), 3)
+
+
+def estimate_reading(
+    session: Session, meter: Meter, period: str,
+) -> Optional[Reading]:
+    """Формирует расчётное показание по §41 (среднее за 12 мес.), не сохраняя.
+
+    Применяется, если житель не подал показание за период: к последнему
+    показанию прибавляется среднемесячный расход. Возвращает None, если нет
+    истории для оценки.
+    """
+    avg = average_consumption(session, meter.id)
+    if avg is None:
+        return None
+    prev = last_reading(session, meter.id)
+    prev_value = prev.value if prev else meter.initial_value
+    mtype = meter.meter_type
+    decimals = mtype.decimals if mtype else 3
+    value = round(prev_value + avg, decimals)
+    return Reading(
+        meter_id=meter.id,
+        period=period,
+        value=value,
+        consumption=round(avg, decimals),
+        reading_date=date.today(),
+        source=ReadingSource.ESTIMATED,
+        status=ReadingStatus.SUBMITTED,
+        is_anomaly=False,
+        note="§41: aprēķināts pēc vidējā patēriņa (12 mēn.)",
+    )
+
+
 def units_for_user(session: Session, user_id: int) -> list[Unit]:
     from app.models import UnitResident
 

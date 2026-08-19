@@ -224,16 +224,36 @@ def ensure_realistic_apartment(
     hot_meters = [("083997", 312.9), ("143182", 389.1),
                   ("514058", 636.0), ("262036", 239.6)]
     ver = date(2029, 3, 18)  # dēr.līdz 18.03.29 со счёта
+    created_meters: list[tuple[Meter, float, float]] = []  # (meter, base, step)
     for sn, val in cold_meters:
-        session.add(Meter(
+        mtr = Meter(
             unit_id=real_unit.id, meter_type_id=types["cold_water"].id,
             serial_number=sn, location="Dzīvoklis", initial_value=val,
-            verification_due=ver, external_id=f"HZ-M-{sn}"))
+            verification_due=ver, external_id=f"HZ-M-{sn}")
+        session.add(mtr)
+        created_meters.append((mtr, val, 3.4))
     for sn, val in hot_meters:
-        session.add(Meter(
+        mtr = Meter(
             unit_id=real_unit.id, meter_type_id=types["hot_water"].id,
             serial_number=sn, location="Dzīvoklis", initial_value=val,
-            verification_due=ver, external_id=f"HZ-M-{sn}"))
+            verification_due=ver, external_id=f"HZ-M-{sn}")
+        session.add(mtr)
+        created_meters.append((mtr, val, 2.1))
+    session.commit()
+
+    # История за 6 прошедших периодов (для графика расхода и §41-среднего)
+    for mtr, base, step in created_meters:
+        session.refresh(mtr)
+        val = base
+        for m in range(6, 0, -1):
+            delta = round(step + ((m % 3) - 1) * 0.5, 3)  # небольшая вариация
+            val = round(val + delta, 3)
+            session.add(Reading(
+                meter_id=mtr.id, period=_period(m), value=val,
+                consumption=delta,
+                reading_date=date.today() - timedelta(days=30 * m),
+                source=ReadingSource.WEB, status=ReadingStatus.SYNCED,
+            ))
     session.commit()
 
     existing_res = session.exec(

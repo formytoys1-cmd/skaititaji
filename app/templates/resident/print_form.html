@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ t('res.print_title') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<style>
+  /* Экранные и печатные стили формы. При печати скрываем навигацию/кнопки. */
+  @media print {
+    header, footer, .no-print, .skip-link { display: none !important; }
+    body { background: #fff !important; }
+    .print-sheet { box-shadow: none !important; border: none !important; margin: 0 !important; }
+    @page { size: A4; margin: 14mm; }
+  }
+  .print-sheet table { border-collapse: collapse; width: 100%; }
+  .print-sheet th, .print-sheet td { border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 13px; }
+  .print-sheet th { background: #f1f5f9; text-align: left; }
+  .fill-cell { min-width: 90px; }
+</style>
+
+<section class="max-w-3xl mx-auto px-4 py-8">
+  <div class="no-print flex items-center justify-between flex-wrap gap-3 mb-4">
+    <a href="/dzivoklis" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm inline-flex items-center gap-1">
+      <span aria-hidden="true">←</span>{{ t('nav.my_flat') }}</a>
+    <button type="button" onclick="window.print()"
+            class="px-4 py-2 rounded-lg brand-bg text-white font-semibold inline-flex items-center gap-2">
+      <span aria-hidden="true">🖨️</span>{{ t('res.do_print') }}</button>
+  </div>
+
+  <div class="print-sheet bg-white rounded-2xl border border-slate-200 p-6">
+    <!-- Шапка: реквизиты организации и квартиры (как в бумажном счёте) -->
+    <div class="flex items-start justify-between flex-wrap gap-4 border-b border-slate-200 pb-4">
+      <div>
+        <h1 class="text-xl font-bold">{{ t('res.print_title') }}</h1>
+        <p class="text-sm text-slate-600 mt-1">{{ t('res.period') }}: <strong>{{ period }}</strong></p>
+      </div>
+      <div class="text-sm text-right">
+        {% if org %}
+          <div class="font-semibold">{{ org.logo_text or org.name }}</div>
+          {% if org.legal_name %}<div class="text-slate-600">{{ org.legal_name }}</div>{% endif %}
+          {% if org.reg_number %}<div class="text-slate-600">Reg. Nr. {{ org.reg_number }}</div>{% endif %}
+          {% if org.address %}<div class="text-slate-600">{{ org.address }}</div>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    {% for card in unit_cards %}
+    <div class="mt-5">
+      <div class="flex items-center justify-between flex-wrap gap-2 text-sm mb-2">
+        <div><span class="text-slate-500">{{ t('res.flat') }}:</span> <strong>{{ card.unit.number }}</strong></div>
+        <div><span class="text-slate-500">Konts:</span> <strong>{{ card.unit.account_number }}</strong></div>
+        {% if card.unit.area_m2 %}<div><span class="text-slate-500">m²:</span> <strong>{{ '%.2f'|format(card.unit.area_m2) }}</strong></div>{% endif %}
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{{ t('res.col_type') }}</th>
+            <th scope="col">{{ t('res.col_serial') }}</th>
+            <th scope="col">{{ t('res.col_verified') }}</th>
+            <th scope="col" class="text-right">{{ t('res.col_start') }}</th>
+            <th scope="col" class="text-right fill-cell">{{ t('res.col_end') }}</th>
+            <th scope="col" class="text-right">{{ t('res.consumption') }} ({{ 'm³' }})</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in card.meters %}
+          <tr>
+            <td><span aria-hidden="true">{{ m.type.icon }}</span> {{ meter_name(m.type) }}</td>
+            <td>{{ m.meter.serial_number }}</td>
+            <td>{{ m.meter.verification_due.strftime('%d.%m.%Y') if m.meter.verification_due else '—' }}</td>
+            <td class="text-right tabular-nums">{{ '%.3f'|format(m.prev_value) }}</td>
+            <td class="text-right tabular-nums">{% if m.current %}{{ '%.3f'|format(m.current.value) }}{% endif %}</td>
+            <td class="text-right tabular-nums">{% if m.current and m.current.consumption is not none %}{{ '%.3f'|format(m.current.consumption) }}{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+
+    <p class="text-xs text-slate-500 mt-4">{{ t('res.print_hint') }}</p>
+
+    <!-- Подпись/дата -->
+    <div class="flex items-end justify-between gap-8 mt-8 text-sm">
+      <div class="flex-1">
+        <div class="border-b border-slate-400 h-6"></div>
+        <div class="text-slate-500 mt-1">{{ t('res.signature') }}</div>
+      </div>
+      <div class="w-40">
+        <div class="border-b border-slate-400 h-6"></div>
+        <div class="text-slate-500 mt-1">{{ t('res.date') }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

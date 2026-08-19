@@ -7,14 +7,17 @@ from sqlmodel import Session
 
 from app.auth import require_user
 from app.database import get_session
-from app.models import Meter, Organization, User, UserRole
+from app.models import Meter, Organization, ReadingSource, User, UserRole
 from app.services import (
     ReadingValidationError,
+    average_consumption,
     current_period,
+    estimate_reading,
     is_window_open,
     last_reading,
     meters_for_unit,
     reading_for_period,
+    readings_history,
     units_for_user,
     upsert_reading,
 )
@@ -50,12 +53,14 @@ def dashboard(
         for m in meters:
             prev = last_reading(session, m.id)
             this_period = reading_for_period(session, m.id, period)
+            avg = average_consumption(session, m.id)
             meter_rows.append({
                 "meter": m,
                 "type": m.meter_type,
                 "prev": prev,
                 "prev_value": prev.value if prev else m.initial_value,
                 "current": this_period,
+                "avg_consumption": avg,
             })
         unit_cards.append({"unit": unit, "meters": meter_rows})
 
@@ -121,3 +126,80 @@ async def submit(
         flash(request, "Nav ievadīts neviens rādījums.", "info")
 
     return RedirectResponse("/dzivoklis", 303)
+
+
+@router.get("/dzivoklis/vesture")
+def history(
+    request: Request,
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+):
+    """История показаний и график расхода по каждому счётчику жителя."""
+    if user.role != UserRole.RESIDENT:
+        return RedirectResponse("/", 303)
+
+    org = _resident_org(session, user)
+    units = units_for_user(session, user.id)
+    unit_cards = []
+    for unit in units:
+        meter_rows = []
+        for m in meters_for_unit(session, unit.id):
+            rows = readings_history(session, m.id, limit=12)
+            points = [
+                {
+                    "period": r.period,
+                    "value": r.value,
+                    "consumption": r.consumption or 0.0,
+                    "estimated": r.source == ReadingSource.ESTIMATED,
+                }
+                for r in rows
+            ]
+            max_c = max((p["consumption"] for p in points), default=0.0)
+            meter_rows.append({
+                "meter": m,
+                "type": m.meter_type,
+                "points": points,
+                "max_c": max_c,
+                "avg": average_consumption(session, m.id),
+            })
+        unit_cards.append({"unit": unit, "meters": meter_rows})
+
+    return render(
+        request, "resident/history.html",
+        {"unit_cards": unit_cards},
+        current_user=user, org=org,
+    )
+
+
+@router.get("/dzivoklis/druka")
+def print_form(
+    request: Request,
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+):
+    """Печатная форма подачи, повторяющая структуру бумажного счёта."""
+    if user.role != UserRole.RESIDENT:
+        return RedirectResponse("/", 303)
+
+    org = _resident_org(session, user)
+    units = units_for_user(session, user.id)
+    period = current_period()
+    unit_cards = []
+    for unit in units:
+        meter_rows = []
+        for m in meters_for_unit(session, unit.id):
+            prev = last_reading(session, m.id)
+            this_period = reading_for_period(session, m.id, period)
+            meter_rows.append({
+                "meter": m,
+                "type": m.meter_type,
+                "prev_value": prev.value if prev else m.initial_value,
+                "current": this_period,
+            })
+        unit_cards.append({"unit": unit, "meters": meter_rows})
+
+    return render(
+        request, "resident/print_form.html",
+        {"unit_cards": unit_cards, "period": period},
+        current_user=user, org=org,
+    )

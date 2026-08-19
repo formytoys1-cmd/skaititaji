@@ -8,6 +8,14 @@
       <p class="text-slate-600 text-sm">{{ t('res.period') }}: <strong>{{ period }}</strong>
         · <a href="/palidziba/iedzivotajs" class="brand-text underline">{{ t('nav.help') }}</a></p>
     </div>
+    {% if unit_cards %}
+    <nav class="flex items-center gap-2 text-sm" aria-label="{{ t('res.title') }}">
+      <a href="/dzivoklis/vesture" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 inline-flex items-center gap-1">
+        <span aria-hidden="true">📈</span>{{ t('res.history_link') }}</a>
+      <a href="/dzivoklis/druka" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 inline-flex items-center gap-1">
+        <span aria-hidden="true">🖨️</span>{{ t('res.print_link') }}</a>
+    </nav>
+    {% endif %}
   </div>
 
   <!-- Статус окна подачи — заметный баннер (визуальная иерархия) -->
@@ -77,6 +85,11 @@
                 placeholder="0.000">
             </div>
             <div id="hint_{{ m.meter.id }}" class="text-xs mt-1 text-right consumption-hint text-slate-600">{{ t('res.consumption') }}: —</div>
+            {% if m.avg_consumption is not none and not m.current %}
+              <div class="text-xs mt-1 text-right text-slate-500" title="{{ t('res.forecast_note') }}">
+                {{ t('res.forecast') }}: <strong>{{ '%.3f'|format(m.avg_consumption) }}</strong> {{ m.type.unit }}
+              </div>
+            {% endif %}
           </div>
         </div>
         {% endfor %}

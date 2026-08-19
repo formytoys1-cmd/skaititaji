@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ t('res.history') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-8">
+  <div class="flex items-start justify-between flex-wrap gap-3">
+    <h1 class="text-2xl font-bold">{{ t('res.history') }}</h1>
+    <a href="/dzivoklis" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm inline-flex items-center gap-1">
+      <span aria-hidden="true">←</span>{{ t('nav.my_flat') }}</a>
+  </div>
+
+  {% set ns = namespace(has_any=false) %}
+  {% for card in unit_cards %}
+    {% for m in card.meters %}{% if m.points %}{% set ns.has_any = true %}{% endif %}{% endfor %}
+  {% endfor %}
+
+  {% if not ns.has_any %}
+    <div class="mt-8 bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-600">
+      {{ t('res.no_history') }}
+    </div>
+  {% endif %}
+
+  {% for card in unit_cards %}
+  <div class="mt-6">
+    <h2 class="text-lg font-semibold text-slate-700">{{ t('res.flat') }} {{ card.unit.number }}
+      <span class="text-slate-500 font-normal text-sm">· {{ card.unit.account_number }}</span></h2>
+
+    {% for m in card.meters %}{% if m.points %}
+    <div class="mt-4 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+        <div class="font-medium flex items-center gap-2">
+          <span aria-hidden="true">{{ m.type.icon }}</span>{{ meter_name(m.type) }}
+          <span class="text-slate-500 font-normal text-sm">Nr. {{ m.meter.serial_number }}</span>
+        </div>
+        {% if m.avg is not none %}
+          <div class="text-xs text-slate-600">{{ t('res.avg_12m') }}: <strong>{{ '%.3f'|format(m.avg) }}</strong> {{ m.type.unit }}</div>
+        {% endif %}
+      </div>
+
+      <!-- График расхода (SVG, без внешних библиотек) -->
+      <div class="px-5 pt-4">
+        <p class="sr-only">{{ t('res.chart_title') }}</p>
+        {% set chart_w = 560 %}{% set chart_h = 120 %}{% set n = m.points|length %}
+        {% set gap = 8 %}{% set bw = ((chart_w - (n+1)*gap) / n) if n else 0 %}
+        <svg viewBox="0 0 {{ chart_w }} {{ chart_h + 24 }}" class="w-full h-auto" role="img"
+             aria-label="{{ t('res.chart_title') }}: {{ meter_name(m.type) }}">
+          {% for p in m.points %}
+            {% set h = ((p.consumption / m.max_c) * chart_h) if m.max_c else 0 %}
+            {% set x = gap + loop.index0 * (bw + gap) %}
+            {% set y = chart_h - h %}
+            <rect x="{{ '%.1f'|format(x) }}" y="{{ '%.1f'|format(y) }}"
+                  width="{{ '%.1f'|format(bw) }}" height="{{ '%.1f'|format(h) }}"
+                  rx="3" fill="{{ '#94a3b8' if p.estimated else m.type.color }}">
+              <title>{{ p.period }}: {{ '%.3f'|format(p.consumption) }} {{ m.type.unit }}{% if p.estimated %} ({{ t('res.estimated') }}){% endif %}</title>
+            </rect>
+            <text x="{{ '%.1f'|format(x + bw/2) }}" y="{{ chart_h + 14 }}"
+                  text-anchor="middle" font-size="9" fill="#64748b">{{ p.period[5:] }}</text>
+          {% endfor %}
+        </svg>
+      </div>
+
+      <!-- Таблица истории -->
+      <div class="p-5 overflow-x-auto">
+        <table class="w-full text-sm">
+          <caption class="sr-only">{{ t('res.history') }}: {{ meter_name(m.type) }}</caption>
+          <thead>
+            <tr class="text-left text-slate-500 border-b border-slate-200">
+              <th scope="col" class="py-2 pr-4 font-medium">{{ t('res.period_col') }}</th>
+              <th scope="col" class="py-2 pr-4 font-medium text-right">{{ t('res.reading_col') }}</th>
+              <th scope="col" class="py-2 font-medium text-right">{{ t('res.consumption') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in m.points|reverse %}
+            <tr class="border-b border-slate-100">
+              <td class="py-2 pr-4">{{ p.period }}
+                {% if p.estimated %}<span class="text-xs text-slate-400">· {{ t('res.estimated') }}</span>{% endif %}</td>
+              <td class="py-2 pr-4 text-right tabular-nums">{{ '%.3f'|format(p.value) }} {{ m.type.unit }}</td>
+              <td class="py-2 text-right tabular-nums">{{ '%.3f'|format(p.consumption) }} {{ m.type.unit }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}{% endfor %}
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -31,6 +31,8 @@ const PAGES = [
   { url: '/this-page-does-not-exist', name: '404' },
   { url: '/registreties', name: 'register' },
   { url: '/demo-login?role=resident', name: 'resident-dashboard' },
+  { url: '/dzivoklis/vesture', name: 'resident-history' },
+  { url: '/dzivoklis/druka', name: 'resident-print' },
   { url: '/demo-login?role=manager', name: 'manager-dashboard' },
   { url: '/parvalde/objekti', name: 'mgr-buildings' },
   { url: '/demo-login?role=admin', name: 'admin-dashboard' },

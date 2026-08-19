@@ -207,6 +207,56 @@ T: dict[str, dict[str, str]] = {
                         "en": "verification due soon"},
     "res.verify_expired": {"lv": "verifikācija beigusies",
                            "ru": "поверка истекла", "en": "verification expired"},
+    # ---- История и график (B) -------------------------------------------- #
+    "res.history": {"lv": "Rādījumu vēsture", "ru": "История показаний",
+                    "en": "Reading history"},
+    "res.history_link": {"lv": "Vēsture un grafiks", "ru": "История и график",
+                         "en": "History & chart"},
+    "res.no_history": {"lv": "Vēl nav rādījumu vēstures.",
+                       "ru": "Истории показаний пока нет.",
+                       "en": "No reading history yet."},
+    "res.period_col": {"lv": "Periods", "ru": "Период", "en": "Period"},
+    "res.reading_col": {"lv": "Rādījums", "ru": "Показание", "en": "Reading"},
+    "res.chart_title": {"lv": "Patēriņa grafiks", "ru": "График расхода",
+                        "en": "Consumption chart"},
+    "res.estimated": {"lv": "aprēķināts (§41)", "ru": "расчётное (§41)",
+                      "en": "estimated (§41)"},
+    "res.avg_12m": {"lv": "Vidēji (12 mēn.)", "ru": "Средн. (12 мес.)",
+                    "en": "Avg (12 mo.)"},
+    # ---- §41 прогноз (C) -------------------------------------------------- #
+    "res.forecast": {
+        "lv": "Ja nenodosiet, tiks aprēķināts vidējais",
+        "ru": "Если не подадите — начислим среднее",
+        "en": "If not submitted, average will be estimated",
+    },
+    "res.forecast_note": {
+        "lv": "Saskaņā ar MK noteikumiem (§41), ja rādījums nav nodots, patēriņu "
+              "aprēķina pēc vidējā par pēdējiem 12 mēnešiem.",
+        "ru": "Согласно правилам КМ (§41), если показание не подано, расход "
+              "рассчитывают по среднему за последние 12 месяцев.",
+        "en": "Per Cabinet rules (§41), if no reading is submitted, consumption is "
+              "estimated from the last 12-month average.",
+    },
+    # ---- Печатная форма (D) ---------------------------------------------- #
+    "res.print": {"lv": "Drukāt veidlapu", "ru": "Печать формы",
+                  "en": "Print form"},
+    "res.print_link": {"lv": "Druka", "ru": "Печать", "en": "Print"},
+    "res.print_title": {"lv": "Skaitītāju rādījumu nodošanas veidlapa",
+                        "ru": "Форма подачи показаний счётчиков",
+                        "en": "Meter reading submission form"},
+    "res.col_serial": {"lv": "Skait. Nr.", "ru": "№ счёт.", "en": "Meter No."},
+    "res.col_verified": {"lv": "Der. līdz", "ru": "Поверка до", "en": "Valid until"},
+    "res.col_start": {"lv": "Sākumā", "ru": "Начало", "en": "Start"},
+    "res.col_end": {"lv": "Beigas", "ru": "Конец", "en": "End"},
+    "res.col_type": {"lv": "Pakalpojums", "ru": "Услуга", "en": "Service"},
+    "res.print_hint": {
+        "lv": "Aizpildiet aili «Beigas» un iesniedziet apsaimniekotājam.",
+        "ru": "Заполните столбец «Конец» и передайте управляющему.",
+        "en": "Fill in the «End» column and hand it to the manager.",
+    },
+    "res.do_print": {"lv": "Drukāt", "ru": "Печать", "en": "Print"},
+    "res.signature": {"lv": "Paraksts", "ru": "Подпись", "en": "Signature"},
+    "res.date": {"lv": "Datums", "ru": "Дата", "en": "Date"},
     # ---- Помощь / мануалы ------------------------------------------------ #
     "help.title": {"lv": "Palīdzība un pamācības", "ru": "Помощь и инструкции",
                    "en": "Help & manuals"},
