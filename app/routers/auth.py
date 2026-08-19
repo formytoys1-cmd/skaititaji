@@ -73,7 +73,11 @@ def set_language(request: Request, code: str):
     lang = normalize_lang(code)
     referer = request.headers.get("referer", "/")
     resp = RedirectResponse(referer, 303)
-    resp.set_cookie("lang", lang, max_age=60 * 60 * 24 * 365, samesite="lax", httponly=True)
+    secure = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
+    resp.set_cookie(
+        "lang", lang, max_age=60 * 60 * 24 * 365,
+        samesite="lax", httponly=True, secure=secure,
+    )
     return resp
 
 
