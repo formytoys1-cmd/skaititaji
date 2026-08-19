@@ -19,8 +19,19 @@
       </div>
       <div>
         <label for="password" class="block text-sm font-medium mb-1">{{ t('reg.password') }}</label>
-        <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password"
-               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none">
+        <div class="relative">
+          <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password"
+                 aria-describedby="pwCriteria"
+                 oninput="pwCheck(this.value)"
+                 class="w-full px-3 py-2 pr-20 rounded-lg border border-slate-300 focus:brand-border outline-none">
+          <button type="button" onclick="pwToggle(this)" aria-pressed="false"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">{{ t('login.show') }}</button>
+        </div>
+        <ul id="pwCriteria" class="mt-2 space-y-1 text-xs" aria-live="polite">
+          <li data-rule="len" class="text-slate-500"><span class="pw-mark" aria-hidden="true">○</span> {{ t('reg.pw_len') }}</li>
+          <li data-rule="letter" class="text-slate-500"><span class="pw-mark" aria-hidden="true">○</span> {{ t('reg.pw_letter') }}</li>
+          <li data-rule="digit" class="text-slate-500"><span class="pw-mark" aria-hidden="true">○</span> {{ t('reg.pw_digit') }}</li>
+        </ul>
       </div>
       <div>
         <label for="account_number" class="block text-sm font-medium mb-1">{{ t('reg.account') }}</label>
@@ -36,4 +47,25 @@
       <a href="/login" class="brand-text underline">{{ t('nav.login') }}</a></p>
   </div>
 </section>
+<script>
+  function pwToggle(btn){
+    var inp = document.getElementById('password');
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  }
+  function pwCheck(v){
+    var rules = {
+      len: v.length >= 8,
+      letter: /[a-zA-ZāčēģīķļņōŗšūžĀČĒĢĪĶĻŅŌŖŠŪŽ]/.test(v),
+      digit: /\d/.test(v),
+    };
+    document.querySelectorAll('#pwCriteria li').forEach(function(li){
+      var ok = rules[li.dataset.rule];
+      li.className = 'flex items-center gap-1 ' + (ok ? 'text-emerald-700' : 'text-slate-500');
+      var mark = li.querySelector('.pw-mark');
+      if (mark) mark.textContent = ok ? '✓' : '○';
+    });
+  }
+</script>
 {% endblock %}

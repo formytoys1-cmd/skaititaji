@@ -357,6 +357,8 @@ T: dict[str, dict[str, str]] = {
                       "en": "estimated (§41)"},
     "res.avg_12m": {"lv": "Vidēji (12 mēn.)", "ru": "Средн. (12 мес.)",
                     "en": "Avg (12 mo.)"},
+    "res.export_csv": {"lv": "Eksportēt CSV", "ru": "Экспорт в CSV",
+                       "en": "Export CSV"},
     # ---- §41 прогноз (C) -------------------------------------------------- #
     "res.forecast": {
         "lv": "Ja nenodosiet, tiks aprēķināts vidējais",
@@ -501,6 +503,14 @@ T: dict[str, dict[str, str]] = {
     "reg.name": {"lv": "Vārds, uzvārds", "ru": "Имя и фамилия", "en": "Full name"},
     "reg.email": {"lv": "E-pasts", "ru": "E-mail", "en": "E-mail"},
     "reg.password": {"lv": "Parole", "ru": "Пароль", "en": "Password"},
+    "reg.pw_len": {"lv": "Vismaz 8 rakstzīmes", "ru": "Минимум 8 символов",
+                   "en": "At least 8 characters"},
+    "reg.pw_letter": {"lv": "Satur burtu", "ru": "Содержит букву",
+                      "en": "Contains a letter"},
+    "reg.pw_digit": {"lv": "Satur ciparu", "ru": "Содержит цифру",
+                     "en": "Contains a digit"},
+    "reg.pw_show": {"lv": "Rādīt paroli", "ru": "Показать пароль",
+                    "en": "Show password"},
     "reg.account": {"lv": "Konta numurs", "ru": "Номер лицевого счёта",
                     "en": "Account number"},
     "reg.account_hint": {

@@ -4,8 +4,12 @@
 <section class="max-w-3xl mx-auto px-4 py-8">
   <div class="flex items-start justify-between flex-wrap gap-3">
     <h1 class="text-2xl font-bold">{{ t('res.history') }}</h1>
-    <a href="/dzivoklis" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm inline-flex items-center gap-1">
-      <span aria-hidden="true">←</span>{{ t('nav.my_flat') }}</a>
+    <div class="flex items-center gap-2">
+      <a href="/dzivoklis/vesture/export.csv" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm inline-flex items-center gap-1">
+        <span aria-hidden="true">⬇️</span>{{ t('res.export_csv') }}</a>
+      <a href="/dzivoklis" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm inline-flex items-center gap-1">
+        <span aria-hidden="true">←</span>{{ t('nav.my_flat') }}</a>
+    </div>
   </div>
 
   {% set ns = namespace(has_any=false) %}

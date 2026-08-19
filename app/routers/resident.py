@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session
 
 from app.auth import require_user
@@ -202,4 +202,51 @@ def print_form(
         request, "resident/print_form.html",
         {"unit_cards": unit_cards, "period": period},
         current_user=user, org=org,
+    )
+
+
+@router.get("/dzivoklis/vesture/export.csv")
+def history_csv(
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+):
+    """Экспорт полной истории показаний жителя в CSV (Excel-совместимый)."""
+    if user.role != UserRole.RESIDENT:
+        return RedirectResponse("/", 303)
+
+    def rows():
+        # BOM для корректной кириллицы/диакритики в Excel + заголовок.
+        yield "\ufeff"
+        header = [
+            "Dzivoklis", "Konts", "Skaititajs_Nr", "Tips",
+            "Periods", "Radijums", "Paterins", "Vieniba",
+            "Datums", "Avots",
+        ]
+        yield ";".join(header) + "\r\n"
+        for unit in units_for_user(session, user.id):
+            for m in meters_for_unit(session, unit.id):
+                mtype = m.meter_type
+                for r in readings_history(session, m.id, limit=120):
+                    row = [
+                        unit.number or "",
+                        unit.account_number or "",
+                        m.serial_number or "",
+                        (mtype.name_lv if mtype else ""),
+                        r.period,
+                        f"{r.value:.3f}",
+                        (f"{r.consumption:.3f}" if r.consumption is not None else ""),
+                        (mtype.unit if mtype else ""),
+                        r.reading_date.strftime("%Y-%m-%d") if r.reading_date else "",
+                        r.source.value,
+                    ]
+                    # экранируем разделитель/кавычки на всякий случай
+                    safe = ['"' + c.replace('"', '""') + '"' if (";" in c or '"' in c) else c
+                            for c in row]
+                    yield ";".join(safe) + "\r\n"
+
+    filename = f"skaititaji_vesture_{current_period()}.csv"
+    return StreamingResponse(
+        rows(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
