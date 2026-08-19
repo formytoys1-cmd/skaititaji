@@ -197,64 +197,65 @@ def ensure_realistic_apartment(
     session: Session, org: Organization, building: Building,
     types: dict[str, MeterType],
 ) -> None:
-    """Идемпотентно создаёт реалистичную квартиру по образцу реального счёта.
+    """Идемпотентно создаёт/дополняет реалистичную квартиру по образцу счёта.
 
     DzĪKS "Ozols-27", Īslīces iela 3, dz. 27: 4 счётчика ХВС + 4 ГВС с реальными
-    серийными номерами и датой поверки. Безопасно вызывать при каждом старте —
-    проверяет наличие по account_number.
+    серийными номерами и датой поверки. Безопасно вызывать при каждом старте:
+    создаёт недостающие объекты и до-заполняет историю показаний (для графика
+    расхода и §41-среднего), не дублируя существующие данные.
     """
     real_unit = session.exec(
         select(Unit).where(Unit.account_number == "Īs-3-0027")
     ).first()
-    if real_unit:
-        return
-
-    real_unit = Unit(
-        building_id=building.id, number="27",
-        account_number="Īs-3-0027", area_m2=150.20, residents_count=1,
-        external_id="HZ-UNIT-27",
-    )
-    session.add(real_unit)
-    session.commit()
-    session.refresh(real_unit)
+    if not real_unit:
+        real_unit = Unit(
+            building_id=building.id, number="27",
+            account_number="Īs-3-0027", area_m2=150.20, residents_count=1,
+            external_id="HZ-UNIT-27",
+        )
+        session.add(real_unit)
+        session.commit()
+        session.refresh(real_unit)
 
     # Реальные серийные номера и начальные показания со счёта (m³)
-    cold_meters = [("015206", 356.1), ("104928", 644.0),
-                   ("724228", 501.5), ("797483", 164.2)]
-    hot_meters = [("083997", 312.9), ("143182", 389.1),
-                  ("514058", 636.0), ("262036", 239.6)]
+    # (серийник, начальное значение, тип, месячный шаг расхода)
+    spec = (
+        [("015206", 356.1, "cold_water", 3.4), ("104928", 644.0, "cold_water", 3.4),
+         ("724228", 501.5, "cold_water", 3.4), ("797483", 164.2, "cold_water", 3.4)]
+        + [("083997", 312.9, "hot_water", 2.1), ("143182", 389.1, "hot_water", 2.1),
+           ("514058", 636.0, "hot_water", 2.1), ("262036", 239.6, "hot_water", 2.1)]
+    )
     ver = date(2029, 3, 18)  # dēr.līdz 18.03.29 со счёта
-    created_meters: list[tuple[Meter, float, float]] = []  # (meter, base, step)
-    for sn, val in cold_meters:
-        mtr = Meter(
-            unit_id=real_unit.id, meter_type_id=types["cold_water"].id,
-            serial_number=sn, location="Dzīvoklis", initial_value=val,
-            verification_due=ver, external_id=f"HZ-M-{sn}")
-        session.add(mtr)
-        created_meters.append((mtr, val, 3.4))
-    for sn, val in hot_meters:
-        mtr = Meter(
-            unit_id=real_unit.id, meter_type_id=types["hot_water"].id,
-            serial_number=sn, location="Dzīvoklis", initial_value=val,
-            verification_due=ver, external_id=f"HZ-M-{sn}")
-        session.add(mtr)
-        created_meters.append((mtr, val, 2.1))
-    session.commit()
+    for sn, base, tcode, step in spec:
+        mtr = session.exec(
+            select(Meter).where(Meter.serial_number == sn,
+                                Meter.unit_id == real_unit.id)
+        ).first()
+        if not mtr:
+            mtr = Meter(
+                unit_id=real_unit.id, meter_type_id=types[tcode].id,
+                serial_number=sn, location="Dzīvoklis", initial_value=base,
+                verification_due=ver, external_id=f"HZ-M-{sn}")
+            session.add(mtr)
+            session.commit()
+            session.refresh(mtr)
 
-    # История за 6 прошедших периодов (для графика расхода и §41-среднего)
-    for mtr, base, step in created_meters:
-        session.refresh(mtr)
-        val = base
-        for m in range(6, 0, -1):
-            delta = round(step + ((m % 3) - 1) * 0.5, 3)  # небольшая вариация
-            val = round(val + delta, 3)
-            session.add(Reading(
-                meter_id=mtr.id, period=_period(m), value=val,
-                consumption=delta,
-                reading_date=date.today() - timedelta(days=30 * m),
-                source=ReadingSource.WEB, status=ReadingStatus.SYNCED,
-            ))
-    session.commit()
+        # До-заполнение истории за 6 периодов, если её ещё нет
+        has_readings = session.exec(
+            select(Reading).where(Reading.meter_id == mtr.id)
+        ).first()
+        if not has_readings:
+            val = base
+            for m in range(6, 0, -1):
+                delta = round(step + ((m % 3) - 1) * 0.5, 3)  # небольшая вариация
+                val = round(val + delta, 3)
+                session.add(Reading(
+                    meter_id=mtr.id, period=_period(m), value=val,
+                    consumption=delta,
+                    reading_date=date.today() - timedelta(days=30 * m),
+                    source=ReadingSource.WEB, status=ReadingStatus.SYNCED,
+                ))
+            session.commit()
 
     existing_res = session.exec(
         select(User).where(User.email == "ozols27@demo.lv")
