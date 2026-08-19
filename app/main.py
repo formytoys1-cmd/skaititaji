@@ -15,7 +15,7 @@ from app.config import settings
 from app.database import get_session, init_db
 from app.models import MeterType, Organization
 from app.routers import admin, agent_api, auth, manager, management, moderator, public, resident
-from app.seed import seed_demo
+from app.seed import ensure_demo_extras, seed_demo
 
 
 async def _self_ping_loop() -> None:
@@ -45,6 +45,7 @@ async def _self_ping_loop() -> None:
 async def lifespan(app: FastAPI):
     init_db()
     seed_demo()  # идемпотентно: создаёт демо-данные, если их ещё нет
+    ensure_demo_extras()  # точечные доводчики к уже существующей БД
     ping_task = asyncio.create_task(_self_ping_loop())
     try:
         yield
