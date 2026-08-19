@@ -1,0 +1,19 @@
+# Пинг сайта, чтобы бесплатный инстанс Render не засыпал.
+name: keep-alive
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # каждые 10 минут
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" https://skaititaji.onrender.com/api/health || echo 000)
+            echo "attempt $i -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 20
+          done
+          echo "site did not respond 200 (may be cold-starting)"; exit 0

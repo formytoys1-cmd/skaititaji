@@ -1,52 +1,58 @@
 {% extends "base.html" %}
-{% block title %}Ieeja — {{ app_name }}{% endblock %}
+{% block title %}{{ t('login.title') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-md mx-auto px-4 py-16">
   <div class="bg-white rounded-2xl border border-slate-200 p-8">
-    <h1 class="text-2xl font-bold">Ieeja</h1>
-    <p class="text-slate-500 text-sm mt-1">Ievadiet e-pastu un paroli.</p>
+    <h1 class="text-2xl font-bold">{{ t('login.title') }}</h1>
+    <p class="text-slate-500 text-sm mt-1">{{ t('login.subtitle') }}</p>
 
     <form method="post" action="/login" class="mt-6 space-y-4">
       <div>
-        <label class="block text-sm font-medium mb-1">E-pasts</label>
+        <label class="block text-sm font-medium mb-1">{{ t('login.email') }}</label>
         <input id="email" name="email" type="email" required autofocus
                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none"
                placeholder="resident@demo.lv">
       </div>
       <div>
-        <label class="block text-sm font-medium mb-1">Parole</label>
-        <input id="password" name="password" type="password" required
-               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none"
-               placeholder="demo1234">
+        <label class="block text-sm font-medium mb-1">{{ t('login.password') }}</label>
+        <div class="relative">
+          <input id="password" name="password" type="password" required
+                 class="w-full px-3 py-2 pr-16 rounded-lg border border-slate-300 focus:brand-border outline-none"
+                 placeholder="demo1234">
+          <button type="button" id="pwToggle" onclick="togglePw()"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600">
+            {{ t('login.show') }}
+          </button>
+        </div>
       </div>
-      <button type="submit" class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Ieiet</button>
+      <button type="submit" class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">{{ t('login.enter') }}</button>
     </form>
 
     <div class="mt-6 pt-6 border-t border-slate-100">
-      <p class="text-xs font-medium text-slate-500 mb-2">Demo piekļuve (parole visiem: <code class="bg-slate-100 px-1 rounded">demo1234</code>)</p>
+      <p class="text-xs font-medium text-slate-500 mb-2">{{ t('login.demo_access') }} <code class="bg-slate-100 px-1 rounded">demo1234</code>)</p>
       <div class="grid gap-2">
         <button type="button" onclick="fillLogin('admin@demo.lv')"
           class="text-left px-3 py-2 rounded-lg border border-slate-200 hover:border-brand hover:bg-slate-50 text-sm">
-          ⚙️ Admins / moderators — <code>admin@demo.lv</code></button>
+          ⚙️ {{ t('login.role_admin') }} — <code>admin@demo.lv</code></button>
         <button type="button" onclick="fillLogin('manager@demo.lv')"
           class="text-left px-3 py-2 rounded-lg border border-slate-200 hover:border-brand hover:bg-slate-50 text-sm">
-          🧑‍💼 Apsaimniekotājs — <code>manager@demo.lv</code></button>
+          🧑‍💼 {{ t('login.role_manager') }} — <code>manager@demo.lv</code></button>
         <button type="button" onclick="fillLogin('resident@demo.lv')"
           class="text-left px-3 py-2 rounded-lg border border-slate-200 hover:border-brand hover:bg-slate-50 text-sm">
-          🏠 Iedzīvotājs — <code>resident@demo.lv</code></button>
+          🏠 {{ t('login.role_resident') }} — <code>resident@demo.lv</code></button>
       </div>
-      <p class="text-xs text-slate-400 mt-2">Nospiediet pogu — lauki aizpildīsies automātiski, tad «Ieiet».</p>
+      <p class="text-xs text-slate-400 mt-2">{{ t('login.quick_hint') }}</p>
     </div>
 
     <div class="mt-6 pt-6 border-t border-slate-100">
-      <p class="text-xs text-slate-400 mb-2">Ražošanā plānots: Smart-ID · eParaksts · banku autentifikācija</p>
+      <p class="text-xs text-slate-400 mb-2">{{ t('login.planned') }}</p>
       <div class="flex gap-2 opacity-50">
         <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-xs">Smart-ID</span>
         <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-xs">eParaksts</span>
         <span class="px-3 py-1.5 rounded-lg bg-slate-100 text-xs">Internetbanka</span>
       </div>
     </div>
-    <p class="mt-4 text-sm text-slate-500">Nav konta? <a href="/demo" class="brand-text">Skatīt demo piekļuvi →</a></p>
+    <p class="mt-4 text-sm text-slate-500">{{ t('login.no_account') }} <a href="/palidziba" class="brand-text">{{ t('nav.help') }} →</a></p>
   </div>
 </section>
 <script>
@@ -54,6 +60,12 @@ function fillLogin(email) {
   document.getElementById('email').value = email;
   document.getElementById('password').value = 'demo1234';
   document.getElementById('password').focus();
+}
+var PW_SHOW = {{ t('login.show')|tojson }}, PW_HIDE = {{ t('login.hide')|tojson }};
+function togglePw() {
+  var p = document.getElementById('password'), b = document.getElementById('pwToggle');
+  if (p.type === 'password') { p.type = 'text'; b.textContent = PW_HIDE; }
+  else { p.type = 'password'; b.textContent = PW_SHOW; }
 }
 </script>
 {% endblock %}

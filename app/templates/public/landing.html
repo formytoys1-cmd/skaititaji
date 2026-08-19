@@ -4,34 +4,31 @@
 <section class="brand-bg text-white">
   <div class="max-w-6xl mx-auto px-4 py-16 md:py-24">
     <div class="max-w-2xl">
-      <p class="uppercase tracking-widest text-white/70 text-xs mb-3">Ūdens · Siltums · Enerģija</p>
+      <p class="uppercase tracking-widest text-white/70 text-xs mb-3">{{ t('landing.eyebrow') }}</p>
       <h1 class="text-4xl md:text-5xl font-bold leading-tight">
-        Skaitītāju rādījumu nodošana — ērti, ātri, caurspīdīgi
+        {{ t('landing.title') }}
       </h1>
-      <p class="mt-5 text-white/90 text-lg">
-        Platforma dzīvokļu īpašniekiem un apsaimniekotājiem. Nododiet aukstā un
-        karstā ūdens rādījumus dažās sekundēs. Viegli pievienojami jauni skaitītāju
-        tipi un jebkura organizācija. Integrācija ar <strong>Visma Horizon</strong>.
-      </p>
+      <p class="mt-5 text-white/90 text-lg">{{ t('landing.desc') }}</p>
       <div class="mt-8 flex flex-wrap gap-3">
-        <a href="/demo" class="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100">Izmēģināt demo →</a>
-        <a href="/login" class="px-5 py-3 rounded-xl bg-white/10 border border-white/30 font-semibold hover:bg-white/20">Ieeja</a>
+        <a href="/demo-login?role=resident" class="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100">{{ t('landing.enter_demo') }}</a>
+        <a href="/login" class="px-5 py-3 rounded-xl bg-white/10 border border-white/30 font-semibold hover:bg-white/20">{{ t('nav.login') }}</a>
+        <a href="/palidziba" class="px-5 py-3 rounded-xl bg-white/10 border border-white/30 font-semibold hover:bg-white/20">{{ t('nav.help') }}</a>
       </div>
     </div>
   </div>
 </section>
 
 <section class="max-w-6xl mx-auto px-4 py-14">
-  <h2 class="text-2xl font-bold mb-2">Kāpēc šī platforma</h2>
-  <p class="text-slate-500 mb-8">Balstīta uz Latvijas tirgus un likumdošanas analīzi.</p>
+  <h2 class="text-2xl font-bold mb-2">{{ t('landing.why') }}</h2>
+  <p class="text-slate-500 mb-8">{{ t('landing.why_sub') }}</p>
   <div class="grid md:grid-cols-3 gap-5">
     {% set features = [
-      ("🧩", "Jebkurš skaitītāja tips", "Konfigurējami skaitītāju tipi — ūdens, elektrība, gāze, siltums. Jauns tips = viens ieraksts, bez koda izmaiņām."),
-      ("🏢", "Daudznomnieku (multi-tenant)", "Katra organizācija (apsaimniekotājs, kooperatīvs, ūdenssaimniecība) — atsevišķa telpa ar savu zīmolu un iestatījumiem."),
-      ("🔌", "Visma Horizon integrācija", "Rādījumi automātiski nonāk grāmatvedības sistēmā (NĪP/KNS moduļi) bez manuālas ievades."),
-      ("📊", "Vadītāja panelis", "Redziet, cik rādījumu nodoti, kuri vēl nav, patēriņa anomālijas un parādnieki."),
-      ("🔐", "Droša autorizācija", "Sagatavots Smart-ID / eParaksts / banku autentifikācijai (eIDAS)."),
-      ("🌍", "LV / RU / EN", "Daudzvalodu saskarne, kas svarīga Latvijas kontekstā."),
+      ("🧩", t('feat.types.t'), t('feat.types.d')),
+      ("🏢", t('feat.multi.t'), t('feat.multi.d')),
+      ("🔌", t('feat.visma.t'), t('feat.visma.d')),
+      ("📊", t('feat.dash.t'), t('feat.dash.d')),
+      ("🔐", t('feat.auth.t'), t('feat.auth.d')),
+      ("🌍", t('feat.lang.t'), t('feat.lang.d')),
     ] %}
     {% for icon, title, desc in features %}
     <div class="bg-white rounded-2xl border border-slate-200 p-6">
@@ -44,14 +41,14 @@
 </section>
 
 <section class="max-w-6xl mx-auto px-4 pb-16">
-  <h2 class="text-2xl font-bold mb-6">Atbalstītie skaitītāju tipi</h2>
+  <h2 class="text-2xl font-bold mb-6">{{ t('landing.supported') }}</h2>
   <div class="flex flex-wrap gap-3">
-    {% for t in meter_types %}
+    {% for mt in meter_types %}
     <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border"
-          style="border-color: {{ t.color }}33; background: {{ t.color }}11;">
-      <span>{{ t.icon }}</span>
-      <span class="font-medium">{{ t.name_lv }}</span>
-      <span class="text-slate-400 text-sm">{{ t.unit }}</span>
+          style="border-color: {{ mt.color }}33; background: {{ mt.color }}11;">
+      <span>{{ mt.icon }}</span>
+      <span class="font-medium">{{ meter_name(mt) }}</span>
+      <span class="text-slate-400 text-sm">{{ mt.unit }}</span>
     </span>
     {% endfor %}
   </div>

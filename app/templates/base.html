@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="lv">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,21 +23,29 @@
         <span class="w-8 h-8 rounded-lg brand-bg text-white flex items-center justify-center">💧</span>
         <span>{{ org.logo_text if org else app_name }}</span>
       </a>
-      <nav class="flex items-center gap-4 text-sm">
+      <nav class="flex items-center gap-3 text-sm">
+        <a href="/palidziba" class="hover:brand-text hidden sm:inline">{{ t('nav.help') }}</a>
+        <!-- Переключатель языка -->
+        <span class="flex items-center gap-1 text-xs">
+          {% for lc in langs %}
+          <a href="/lang/{{ lc }}"
+             class="px-1.5 py-0.5 rounded {% if lc == lang %}brand-bg text-white{% else %}text-slate-400 hover:text-slate-700{% endif %}">{{ lang_names[lc] }}</a>
+          {% endfor %}
+        </span>
         {% if current_user %}
-          <span class="text-slate-500 hidden sm:inline">{{ current_user.full_name }}</span>
+          <span class="text-slate-500 hidden md:inline">{{ current_user.full_name }}</span>
           {% if current_user.role.value == 'resident' %}
-            <a href="/dzivoklis" class="hover:brand-text">Mans dzīvoklis</a>
+            <a href="/dzivoklis" class="hover:brand-text">{{ t('nav.my_flat') }}</a>
           {% elif current_user.role.value == 'manager' %}
-            <a href="/parvalde" class="hover:brand-text">Pārvalde</a>
+            <a href="/parvalde" class="hover:brand-text">{{ t('nav.management') }}</a>
           {% elif current_user.role.value == 'superadmin' %}
-            <a href="/admin" class="hover:brand-text">Admin</a>
-            <a href="/admin/inbox" class="hover:brand-text">Konsole</a>
+            <a href="/admin" class="hover:brand-text">{{ t('nav.admin') }}</a>
+            <a href="/admin/inbox" class="hover:brand-text">{{ t('nav.console') }}</a>
           {% endif %}
-          <a href="/logout" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200">Iziet</a>
+          <a href="/logout" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200">{{ t('nav.logout') }}</a>
         {% else %}
-          <a href="/demo" class="hover:brand-text">Demo</a>
-          <a href="/login" class="px-3 py-1.5 rounded-lg brand-bg text-white">Ieeja</a>
+          <a href="/demo" class="hover:brand-text">{{ t('nav.demo') }}</a>
+          <a href="/login" class="px-3 py-1.5 rounded-lg brand-bg text-white">{{ t('nav.login') }}</a>
         {% endif %}
       </nav>
     </div>
@@ -62,8 +70,8 @@
 
   <footer class="border-t border-slate-200 bg-white mt-10">
     <div class="max-w-6xl mx-auto px-4 py-6 text-xs text-slate-400 flex flex-wrap justify-between gap-2">
-      <span>© {{ app_name }} — demo. Integrācija: Visma Horizon REST API.</span>
-      <span>Skaitītāju rādījumu nodošanas platforma</span>
+      <span>{{ t('footer.copy') }}</span>
+      <span>{{ t('footer.tagline') }}</span>
     </div>
   </footer>
 </body>

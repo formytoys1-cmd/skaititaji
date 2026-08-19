@@ -1,22 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Mans dzīvoklis — {{ app_name }}{% endblock %}
+{% block title %}{{ t('nav.my_flat') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-3xl mx-auto px-4 py-8">
   <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
-      <h1 class="text-2xl font-bold">Skaitītāju rādījumu nodošana</h1>
-      <p class="text-slate-500 text-sm">Periods: <strong>{{ period }}</strong></p>
+      <h1 class="text-2xl font-bold">{{ t('res.title') }}</h1>
+      <p class="text-slate-500 text-sm">{{ t('res.period') }}: <strong>{{ period }}</strong>
+        · <a href="/palidziba/iedzivotajs" class="brand-text">{{ t('nav.help') }}</a></p>
     </div>
     {% if window_open %}
-      <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">● Nodošana atvērta</span>
+      <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">{{ t('res.window_open') }}</span>
     {% else %}
-      <span class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm border border-amber-200">Ārpus nodošanas perioda (rādījumi tiks pieņemti)</span>
+      <span class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm border border-amber-200">{{ t('res.window_closed') }}</span>
     {% endif %}
   </div>
 
   {% if not unit_cards %}
     <div class="mt-8 bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
-      Jūsu kontam nav piesaistīts neviens dzīvoklis.
+      {{ t('res.no_flat') }}
     </div>
   {% endif %}
 
@@ -24,10 +25,10 @@
     {% for card in unit_cards %}
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
       <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-        <div class="font-semibold">Dzīvoklis {{ card.unit.number }}
+        <div class="font-semibold">{{ t('res.flat') }} {{ card.unit.number }}
           <span class="text-slate-400 font-normal text-sm">· {{ card.unit.account_number }}</span>
         </div>
-        <span class="text-xs text-slate-400">{{ card.meters|length }} skaitītāji</span>
+        <span class="text-xs text-slate-400">{{ card.meters|length }} {{ t('res.meters') }}</span>
       </div>
       <div class="divide-y divide-slate-100">
         {% for m in card.meters %}
@@ -35,14 +36,14 @@
           <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
                style="background: {{ m.type.color }}18;">{{ m.type.icon }}</div>
           <div class="flex-1 min-w-[140px]">
-            <div class="font-medium">{{ m.type.name_lv }}</div>
+            <div class="font-medium">{{ meter_name(m.type) }}</div>
             <div class="text-xs text-slate-400">Nr. {{ m.meter.serial_number }}
               {% if m.meter.location %}· {{ m.meter.location }}{% endif %}</div>
           </div>
           <div class="text-sm text-slate-500 text-right">
-            <div>Iepr.: <strong>{{ '%.3f'|format(m.prev_value) }}</strong> {{ m.type.unit }}</div>
+            <div>{{ t('res.prev') }}: <strong>{{ '%.3f'|format(m.prev_value) }}</strong> {{ m.type.unit }}</div>
             {% if m.current %}
-              <div class="text-emerald-600 text-xs">✓ Nodots: {{ '%.3f'|format(m.current.value) }}</div>
+              <div class="text-emerald-600 text-xs">✓ {{ t('res.submitted') }}: {{ '%.3f'|format(m.current.value) }}</div>
             {% endif %}
           </div>
           <div class="w-40">
@@ -58,7 +59,7 @@
                 class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none text-right"
                 placeholder="0.000">
             </div>
-            <div class="text-xs mt-1 text-right consumption-hint text-slate-400">Patēriņš: —</div>
+            <div class="text-xs mt-1 text-right consumption-hint text-slate-400">{{ t('res.consumption') }}: —</div>
           </div>
         </div>
         {% endfor %}
@@ -68,30 +69,31 @@
 
     {% if unit_cards %}
     <div class="flex items-center justify-between gap-3">
-      <p class="text-xs text-slate-400">Rādījums nevar būt mazāks par iepriekšējo. Pārāk liels patēriņš tiek atzīmēts kā anomālija.</p>
-      <button class="px-6 py-3 rounded-xl brand-bg text-white font-semibold">Nodot rādījumus</button>
+      <p class="text-xs text-slate-400">{{ t('res.rule') }}</p>
+      <button class="px-6 py-3 rounded-xl brand-bg text-white font-semibold">{{ t('res.submit') }}</button>
     </div>
     {% endif %}
   </form>
 </section>
 
 <script>
+var L_CONS = {{ t('res.consumption')|tojson }}, L_LESS = {{ t('res.less')|tojson }}, L_ANOM = {{ t('res.anomaly')|tojson }};
 function calcConsumption(input) {
   const prev = parseFloat(input.dataset.prev || "0");
   const unit = input.dataset.unit || "";
   const max = parseFloat(input.dataset.max || "0");
   const hint = input.parentElement.parentElement.querySelector(".consumption-hint");
   const val = parseFloat((input.value || "").replace(",", "."));
-  if (isNaN(val)) { hint.textContent = "Patēriņš: —"; hint.className = "text-xs mt-1 text-right consumption-hint text-slate-400"; return; }
+  if (isNaN(val)) { hint.textContent = L_CONS + ": —"; hint.className = "text-xs mt-1 text-right consumption-hint text-slate-400"; return; }
   const c = +(val - prev).toFixed(3);
   if (val < prev) {
-    hint.textContent = "⚠ Mazāks par iepriekšējo";
+    hint.textContent = "⚠ " + L_LESS;
     hint.className = "text-xs mt-1 text-right consumption-hint text-red-600";
   } else if (max && c > max) {
-    hint.textContent = "⚠ Anomālija: " + c + " " + unit;
+    hint.textContent = "⚠ " + L_ANOM + ": " + c + " " + unit;
     hint.className = "text-xs mt-1 text-right consumption-hint text-amber-600";
   } else {
-    hint.textContent = "Patēriņš: " + c + " " + unit;
+    hint.textContent = L_CONS + ": " + c + " " + unit;
     hint.className = "text-xs mt-1 text-right consumption-hint text-emerald-600";
   }
 }
