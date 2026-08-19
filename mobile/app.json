@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Skaitītāji",
+    "slug": "skaititaji",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "skaititaji",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0369a1"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "lv.skaititaji.app",
+      "infoPlist": {
+        "NSAppTransportSecurity": { "NSAllowsArbitraryLoads": false }
+      }
+    },
+    "android": {
+      "package": "lv.skaititaji.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0369a1"
+      }
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
+    "extra": {
+      "siteUrl": "https://skaititaji.onrender.com"
+    }
+  }
+}
