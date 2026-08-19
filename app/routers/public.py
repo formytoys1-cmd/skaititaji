@@ -116,3 +116,35 @@ def accessibility(
     ).first()
     return render(request, "legal/accessibility.html",
                   current_user=current_user, org=org)
+
+
+@router.get("/atbilstiba")
+def compliance(
+    request: Request,
+    current_user: User | None = Depends(get_current_user),
+):
+    """Публичный реестр соответствия стандартам и законам (из compliance.yml)."""
+    import os
+
+    import yaml
+
+    data = {"categories": [], "meta": {}}
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                        "compliance.yml")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or data
+    except Exception:
+        pass
+
+    # Сводка по статусам
+    counts = {"ok": 0, "partial": 0, "planned": 0, "n/a": 0}
+    for cat in data.get("categories", []):
+        for it in cat.get("items", []):
+            counts[it.get("status", "n/a")] = counts.get(it.get("status", "n/a"), 0) + 1
+
+    return render(
+        request, "legal/compliance.html",
+        {"data": data, "counts": counts},
+        current_user=current_user,
+    )

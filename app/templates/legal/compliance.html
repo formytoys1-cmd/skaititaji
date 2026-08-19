@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Atbilstība standartiem' if lang=='lv' else ('Соответствие стандартам' if lang=='ru' else 'Standards compliance') }} — {{ app_name }}{% endblock %}
+{% set L = {'ok':'emerald','partial':'amber','planned':'sky','n/a':'slate'} %}
+{% set LBL = {
+  'ok': {'lv':'Atbilst','ru':'Соответствует','en':'Conforms'},
+  'partial': {'lv':'Daļēji','ru':'Частично','en':'Partial'},
+  'planned': {'lv':'Plānots','ru':'Планируется','en':'Planned'},
+  'n/a': {'lv':'Nav attiecināms','ru':'Не применимо','en':'N/A'}
+} %}
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 py-10">
+  <h1 class="text-3xl font-bold">{{ 'Atbilstība standartiem un likumiem' if lang=='lv' else ('Соответствие стандартам и законам' if lang=='ru' else 'Compliance with standards and laws') }}</h1>
+  <p class="text-slate-700 mt-2">
+    {{ 'Šis reģistrs tiek automātiski uzraudzīts (CI) un pārskatīts reizi ceturksnī.' if lang=='lv' else ('Этот реестр автоматически контролируется (CI) и пересматривается ежеквартально.' if lang=='ru' else 'This registry is automatically monitored (CI) and reviewed quarterly.') }}
+    {% if data.meta and data.meta.updated %}<span class="text-slate-500">· {{ data.meta.updated }}</span>{% endif %}
+  </p>
+
+  <!-- Сводка -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+    {% for k in ['ok','partial','planned','n/a'] %}
+    <div class="bg-white rounded-xl border border-slate-200 p-4">
+      <div class="text-2xl font-bold text-{{ L[k] }}-700">{{ counts[k] }}</div>
+      <div class="text-xs text-slate-600">{{ LBL[k][lang] if LBL[k][lang] else LBL[k]['en'] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Категории -->
+  <div class="mt-8 space-y-8">
+    {% for cat in data.categories %}
+    <div>
+      <h2 class="text-xl font-semibold text-slate-900">{{ cat.title[lang] if cat.title[lang] else cat.title['en'] }}</h2>
+      <div class="mt-3 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="divide-y divide-slate-100">
+          {% for it in cat['items'] %}
+          <div class="p-4 flex items-start gap-3 flex-wrap">
+            <span class="shrink-0 mt-0.5 px-2.5 py-1 rounded-full text-xs bg-{{ L[it.status] }}-50 text-{{ L[it.status] }}-700 border border-{{ L[it.status] }}-200">
+              {{ LBL[it.status][lang] if LBL[it.status][lang] else LBL[it.status]['en'] }}
+            </span>
+            <div class="flex-1 min-w-[220px]">
+              <div class="font-medium">
+                <a href="{{ it.url }}" target="_blank" rel="noopener noreferrer" class="hover:brand-text underline">{{ it.name }}</a>
+                {% if it.automated %}<span class="ml-1 text-xs text-emerald-700" title="Automated check">⚙︎ auto</span>{% endif %}
+              </div>
+              <div class="text-sm text-slate-600 mt-0.5">{{ it.how }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="mt-8 text-sm text-slate-500">
+    {{ 'Automatizācijas detaļas:' if lang=='lv' else ('Детали автоматизации:' if lang=='ru' else 'Automation details:') }}
+    <a href="/pieejamiba" class="brand-text underline">{{ t('nav.accessibility') }}</a> ·
+    <a href="/privatums" class="brand-text underline">{{ t('nav.privacy') }}</a>
+  </p>
+</section>
+{% endblock %}

@@ -65,3 +65,39 @@
 - Автотесты пользовательских сценариев (Playwright e2e) в тех же воротах.
 - Реальный контраст-токенайзер (дизайн-токены) вместо ручных классов.
 - Подключить `pa11y-ci`/`lighthouse-ci` server для трендов во времени.
+
+---
+
+## 7. Расширенная автоматизация безопасности и соответствия (v2)
+
+Добавлено сверх доступности/Lighthouse:
+
+| Проверка | Инструмент | Где | Гейт |
+|---|---|---|---|
+| Security headers | `tools/audit/check_headers.py` | CI (job accessibility) | ✅ падает при отсутствии |
+| Уязвимости Python-зависимостей (CVE) | `pip-audit` | CI (job security) | ⚠️ warning |
+| Секреты в коде/истории | `gitleaks` | CI (job security) | ✅ |
+| Валидность HTML | `html-validate` | CI (job html-validate) | ⚠️ warning |
+| Обновления зависимостей | **Dependabot** (`deploy_extras/dependabot.yml`) | еженедельно, авто-PR | — |
+| Новые версии стандартов/инструментов | **standards-watch** (`deploy_extras/standards-watch.yml`) | еженедельно, авто-issue | — |
+
+### Реестр соответствия
+- **`compliance.yml`** — машиночитаемый реестр стандартов и законов со статусами
+  (ok/partial/planned/n/a) и способом контроля каждого.
+- Публичная страница **`/atbilstiba`** рендерит реестр (с автопометкой ⚙︎ auto для
+  автоматически проверяемых пунктов).
+
+### Security headers, которые отдаёт приложение
+CSP, HSTS (HTTPS), X-Content-Type-Options, X-Frame-Options, Referrer-Policy,
+Permissions-Policy, Cross-Origin-Opener-Policy. Сессионная cookie: HttpOnly +
+Secure (прод) + SameSite=Lax.
+
+## 8. Полная карта стандартов и законов (кратко)
+Доступность: **WCAG 2.2 AA, EN 301 549, Дир. 2016/2102, EAA 2019/882, MK Nr. 445**.
+Данные: **GDPR 2016/679, ePrivacy 2002/58, LV FPDAL**.
+Безопасность: **OWASP Top 10 + Secure Headers, CVE-скан, NIS2 2022/2555, ISO 27001**.
+Веб: **HTML Living Standard, Lighthouse, HTTPS/TLS**.
+Цифровые ЕС: **eIDAS 910/2014, AI Act 2024/1689**.
+Отрасль LV: **Ūdenssaimniecības pakalpojumu likums, MK Nr. 174, Dzīvojamo māju
+pārvaldīšanas likums, Patērētāju tiesību aizsardzības likums**.
+Полный список со статусами и ссылками — в `compliance.yml` и на `/atbilstiba`.

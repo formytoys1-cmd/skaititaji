@@ -53,7 +53,57 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
-app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, max_age=60 * 60 * 8)
+
+
+# --------------------------------------------------------------------------- #
+# Security headers (OWASP secure headers project, MDN best practices)
+# --------------------------------------------------------------------------- #
+# CSP разрешает Tailwind CDN и axe (cdnjs) — источники, которые реально нужны.
+# 'unsafe-inline' для скриптов пока необходим из-за встроенных <script> и
+# Tailwind-CDN рантайма; см. дорожную карту (прод-сборка Tailwind → строгий CSP).
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; "
+    "font-src 'self' data:; "
+    "connect-src 'self'; "
+    "frame-ancestors 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "object-src 'none'"
+)
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = _CSP
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = (
+        "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+    )
+    # HSTS включаем только на HTTPS (за прокси Render заголовок x-forwarded-proto).
+    if request.headers.get("x-forwarded-proto", request.url.scheme) == "https":
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains; preload"
+        )
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+    return response
+
+
+# Сессионная cookie: HttpOnly (по умолчанию), Secure в проде, SameSite=Lax.
+_is_prod = bool(os.getenv("RENDER_EXTERNAL_URL") or os.getenv("SELF_PING_URL")) or not settings.debug
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.secret_key,
+    max_age=60 * 60 * 8,
+    same_site="lax",
+    https_only=_is_prod,
+)
 
 # Гарантируем наличие каталога статики (пустые папки git не хранит — на свежем
 # клоне их может не быть). Без этого StaticFiles упал бы при старте.
