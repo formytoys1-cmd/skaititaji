@@ -2,7 +2,7 @@
 {% block title %}Norādījums #{{ thread.id }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-3xl mx-auto px-4 py-8">
-  <a href="/admin/inbox" class="text-sm text-slate-600 hover:brand-text">← Visi norādījumi</a>
+  <a href="/admin/inbox" class="text-sm text-slate-600 hover:brand-text">← {{ t('inbox.all_threads') }}</a>
 
   <div class="mt-3 flex items-start justify-between gap-3 flex-wrap">
     <div>
@@ -18,25 +18,41 @@
     <span class="px-3 py-1.5 rounded-full text-sm bg-{{ color }}-50 text-{{ color }}-700 border border-{{ color }}-200">{{ label }}</span>
   </div>
 
-  <!-- Переписка -->
-  <div class="mt-6 space-y-3">
-    {% for m in messages %}
-    <div class="flex {% if m.author.value == 'agent' %}justify-start{% else %}justify-end{% endif %}">
-      <div class="max-w-[85%] rounded-2xl px-4 py-3 border
-        {% if m.author.value == 'agent' %}bg-slate-50 border-slate-200{% else %}brand-bg text-white border-transparent{% endif %}">
-        <div class="text-xs mb-1 {% if m.author.value == 'agent' %}text-slate-600{% else %}text-white/70{% endif %}">
-          {{ 'Aģents' if m.author.value == 'agent' else 'Moderators' }} · {{ m.created_at.strftime('%Y-%m-%d %H:%M') }}
-        </div>
-        <div class="whitespace-pre-wrap text-sm">{{ m.body }}</div>
+  <!-- Ответ модератора — вверху, чтобы актуальное было сразу под рукой -->
+  <form method="post" action="/admin/inbox/{{ thread.id }}/reply" enctype="multipart/form-data" class="mt-6">
+    <label for="reply_body" class="block text-sm font-medium text-slate-700 mb-1">{{ t('inbox.reply_title') }}</label>
+    <textarea id="reply_body" name="body" rows="3" placeholder="Atbilde vai precizējums aģentam..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
+    <div class="flex items-center justify-between gap-3 mt-2 flex-wrap">
+      <div class="flex items-center gap-3">
+        <label class="fp-btn cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg brand-bg text-white font-medium text-sm hover:opacity-90 focus-within:ring-2 focus-within:ring-sky-300" onclick="fpActivate(this)">
+          <span class="fp-icon" aria-hidden="true">📎</span>
+          <span>{{ t('inbox.choose_files') }}</span>
+          <input type="file" name="files" multiple class="sr-only"
+                 aria-label="{{ t('inbox.choose_files') }}"
+                 data-none="{{ t('inbox.no_file') }}" data-many="{{ t('inbox.files_n') }}"
+                 onchange="fpUpdate(this)">
+        </label>
+        <span class="file-name text-xs text-slate-600">{{ t('inbox.no_file') }}</span>
       </div>
+      <button class="px-5 py-2.5 rounded-lg brand-bg text-white font-semibold">{{ t('inbox.send') }}</button>
     </div>
-    {% endfor %}
-  </div>
+  </form>
+
+  <!-- Смена статуса -->
+  <form method="post" action="/admin/inbox/{{ thread.id }}/status" class="mt-3 flex items-center gap-2 flex-wrap">
+    <span class="text-sm text-slate-500">{{ t('inbox.change_status') }}:</span>
+    <select name="status" aria-label="{{ t('inbox.change_status') }}" class="text-sm px-3 py-2 rounded-lg border border-slate-300">
+      <option value="done">Pieņemts (done)</option>
+      <option value="rejected">Atcelt (rejected)</option>
+      <option value="new">Atkārtoti aģentam (new)</option>
+    </select>
+    <button class="text-sm px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200">{{ t('inbox.apply') }}</button>
+  </form>
 
   <!-- Вложения -->
   {% if attachments %}
   <div class="mt-6 bg-white rounded-2xl border border-slate-200 p-4">
-    <div class="font-semibold text-sm mb-2">📎 Pievienotie faili ({{ attachments|length }})</div>
+    <div class="font-semibold text-sm mb-2">📎 {{ t('inbox.attachments') }} ({{ attachments|length }})</div>
     <div class="flex flex-wrap gap-2">
       {% for a in attachments %}
       <a href="/admin/inbox/attachment/{{ a.id }}" target="_blank"
@@ -50,35 +66,24 @@
   </div>
   {% endif %}
 
-  <!-- Ответ модератора -->
-  <form method="post" action="/admin/inbox/{{ thread.id }}/reply" enctype="multipart/form-data" class="mt-6">
-    <textarea name="body" rows="3" placeholder="Atbilde vai precizējums aģentam..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
-    <div class="flex items-center justify-between gap-3 mt-2 flex-wrap">
-      <div class="flex items-center gap-3">
-        <label class="fp-btn cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg brand-bg text-white font-medium text-sm hover:opacity-90 focus-within:ring-2 focus-within:ring-sky-300" onclick="fpActivate(this)">
-          <span class="fp-icon" aria-hidden="true">📎</span>
-          <span>{{ t('inbox.choose_files') }}</span>
-          <input type="file" name="files" multiple class="sr-only"
-                 aria-label="{{ t('inbox.choose_files') }}"
-                 data-none="{{ t('inbox.no_file') }}" data-many="{{ t('inbox.files_n') }}"
-                 onchange="fpUpdate(this)">
-        </label>
-        <span class="file-name text-xs text-slate-600">{{ t('inbox.no_file') }}</span>
+  <!-- Переписка: новые сообщения сверху, история — вниз -->
+  <div class="mt-6 border-t border-slate-100 pt-4">
+    <div class="text-xs text-slate-500 mb-3">↓ {{ t('inbox.newest_top') }}</div>
+    <div class="space-y-3">
+      {% for m in messages|reverse %}
+      <div class="flex {% if m.author.value == 'agent' %}justify-start{% else %}justify-end{% endif %}">
+        <div class="max-w-[85%] rounded-2xl px-4 py-3 border
+          {% if m.author.value == 'agent' %}bg-slate-50 border-slate-200{% else %}brand-bg text-white border-transparent{% endif %}">
+          <div class="text-xs mb-1 {% if m.author.value == 'agent' %}text-slate-600{% else %}text-white/70{% endif %}">
+            {{ t('inbox.author_agent') if m.author.value == 'agent' else t('inbox.author_moderator') }} · {{ m.created_at.strftime('%Y-%m-%d %H:%M') }}
+          </div>
+          <div class="whitespace-pre-wrap text-sm">{{ m.body }}</div>
+        </div>
       </div>
-      <button class="px-5 py-2.5 rounded-lg brand-bg text-white font-semibold">Sūtīt aģentam</button>
+      {% endfor %}
     </div>
-  </form>
-
-  <!-- Смена статуса (отдельная форма) -->
-  <form method="post" action="/admin/inbox/{{ thread.id }}/status" class="mt-3 flex items-center gap-2 border-t border-slate-100 pt-4">
-    <span class="text-sm text-slate-500">Mainīt statusu:</span>
-    <select name="status" aria-label="Statuss" class="text-sm px-3 py-2 rounded-lg border border-slate-300">
-      <option value="done">Pieņemts (done)</option>
-      <option value="rejected">Atcelt (rejected)</option>
-      <option value="new">Atkārtoti aģentam (new)</option>
-    </select>
-    <button class="text-sm px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200">Piemērot</button>
-  </form>
+  </div>
 
 </section>
 {% endblock %}
+
