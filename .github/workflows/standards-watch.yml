@@ -44,7 +44,7 @@ jobs:
           fi
       - name: Open issue if changes
         if: steps.check.outputs.changed == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const body = process.env.BODY;
