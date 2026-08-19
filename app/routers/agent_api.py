@@ -85,7 +85,6 @@ def api_thread(
     atts = attachments_for_thread(session, thread_id)
     return {
         "thread": _thread_summary(session, thread),
-        "body": thread.body,
         "messages": [
             {
                 "id": m.id,
