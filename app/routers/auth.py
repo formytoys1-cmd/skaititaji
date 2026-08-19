@@ -5,10 +5,23 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlmodel import Session, select
 
-from app.auth import authenticate, get_current_user, login_user, logout_user
+from app.auth import (
+    authenticate,
+    get_current_user,
+    hash_password,
+    login_user,
+    logout_user,
+)
 from app.database import get_session
 from app.i18n import normalize_lang
-from app.models import User, UserRole
+from app.models import (
+    Building,
+    Organization,
+    Unit,
+    UnitResident,
+    User,
+    UserRole,
+)
 from app.web import flash, render
 
 router = APIRouter()
@@ -79,6 +92,71 @@ def set_language(request: Request, code: str):
         samesite="lax", httponly=True, secure=secure,
     )
     return resp
+
+
+# --------------------------------------------------------------------------- #
+# Самрегистрация жителя (привязка к квартире по лицевому счёту)
+# --------------------------------------------------------------------------- #
+@router.get("/registreties")
+def register_form(
+    request: Request,
+    current_user: User | None = Depends(get_current_user),
+):
+    if current_user:
+        return RedirectResponse(_ROLE_HOME.get(current_user.role, "/"), 303)
+    return render(request, "register.html", current_user=None)
+
+
+@router.post("/registreties")
+def register_submit(
+    request: Request,
+    full_name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    account_number: str = Form(...),
+    session: Session = Depends(get_session),
+):
+    email = email.lower().strip()
+    account_number = account_number.strip()
+
+    if len(password) < 6:
+        flash(request, "Parolei jābūt vismaz 6 rakstzīmes.", "error")
+        return RedirectResponse("/registreties", 303)
+
+    # Квартира по лицевому счёту (его выдаёт управляющий)
+    unit = session.exec(
+        select(Unit).where(Unit.account_number == account_number)
+    ).first()
+    if not unit:
+        flash(request, "Konta numurs nav atrasts. Sazinieties ar apsaimniekotāju.",
+              "error")
+        return RedirectResponse("/registreties", 303)
+
+    # Уже есть пользователь с таким email?
+    existing = session.exec(select(User).where(User.email == email)).first()
+    if existing:
+        flash(request, "Lietotājs ar šādu e-pastu jau eksistē. Ieejiet sistēmā.",
+              "error")
+        return RedirectResponse("/login", 303)
+
+    # Организация — по дому квартиры
+    building = session.get(Building, unit.building_id)
+    org_id = building.organization_id if building else None
+
+    user = User(
+        organization_id=org_id, email=email, full_name=full_name.strip(),
+        password_hash=hash_password(password), role=UserRole.RESIDENT,
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    session.add(UnitResident(user_id=user.id, unit_id=unit.id, relation="owner"))
+    session.commit()
+
+    login_user(request, user)
+    flash(request, f"Reģistrācija veiksmīga! Sveiki, {user.full_name}.", "success")
+    return RedirectResponse("/dzivoklis", 303)
 
 
 @router.get("/logout")

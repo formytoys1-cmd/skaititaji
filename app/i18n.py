@@ -299,6 +299,28 @@ T: dict[str, dict[str, str]] = {
         "ru": "Построено по высоким стандартам:",
         "en": "Built to high standards:",
     },
+    # ---- Регистрация жителя / управление -------------------------------- #
+    "nav.register": {"lv": "Reģistrēties", "ru": "Регистрация", "en": "Sign up"},
+    "nav.objects": {"lv": "Objekti", "ru": "Объекты", "en": "Properties"},
+    "reg.title": {"lv": "Reģistrācija", "ru": "Регистрация", "en": "Sign up"},
+    "reg.subtitle": {
+        "lv": "Izveidojiet kontu, lai nodotu sava dzīvokļa rādījumus.",
+        "ru": "Создайте аккаунт, чтобы подавать показания вашей квартиры.",
+        "en": "Create an account to submit your apartment's readings.",
+    },
+    "reg.name": {"lv": "Vārds, uzvārds", "ru": "Имя и фамилия", "en": "Full name"},
+    "reg.email": {"lv": "E-pasts", "ru": "E-mail", "en": "E-mail"},
+    "reg.password": {"lv": "Parole", "ru": "Пароль", "en": "Password"},
+    "reg.account": {"lv": "Konta numurs", "ru": "Номер лицевого счёта",
+                    "en": "Account number"},
+    "reg.account_hint": {
+        "lv": "Konta numuru izsniedz jūsu apsaimniekotājs (norādīts rēķinā).",
+        "ru": "Номер счёта выдаёт ваш управляющий (указан в квитанции).",
+        "en": "Your property manager provides the account number (on your invoice).",
+    },
+    "reg.submit": {"lv": "Reģistrēties", "ru": "Зарегистрироваться", "en": "Sign up"},
+    "reg.have_account": {"lv": "Jau ir konts?", "ru": "Уже есть аккаунт?",
+                         "en": "Already have an account?"},
 }
 
 

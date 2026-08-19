@@ -29,8 +29,10 @@ const PAGES = [
   { url: '/pieejamiba', name: 'accessibility' },
   { url: '/atbilstiba', name: 'compliance' },
   { url: '/this-page-does-not-exist', name: '404' },
+  { url: '/registreties', name: 'register' },
   { url: '/demo-login?role=resident', name: 'resident-dashboard' },
   { url: '/demo-login?role=manager', name: 'manager-dashboard' },
+  { url: '/parvalde/objekti', name: 'mgr-buildings' },
   { url: '/demo-login?role=admin', name: 'admin-dashboard' },
   { url: '/admin/inbox', name: 'admin-console' },
 ];

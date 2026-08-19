@@ -67,6 +67,7 @@
             <a href="/dzivoklis" class="text-slate-700 hover:brand-text">{{ t('nav.my_flat') }}</a>
           {% elif current_user.role.value == 'manager' %}
             <a href="/parvalde" class="text-slate-700 hover:brand-text">{{ t('nav.management') }}</a>
+            <a href="/parvalde/objekti" class="text-slate-700 hover:brand-text">{{ t('nav.objects') }}</a>
           {% elif current_user.role.value == 'superadmin' %}
             <a href="/admin" class="text-slate-700 hover:brand-text">{{ t('nav.admin') }}</a>
             <a href="/admin/inbox" class="text-slate-700 hover:brand-text">{{ t('nav.console') }}</a>

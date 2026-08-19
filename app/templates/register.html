@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ t('reg.title') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-md mx-auto px-4 py-16">
+  <div class="bg-white rounded-2xl border border-slate-200 p-8">
+    <h1 class="text-2xl font-bold">{{ t('reg.title') }}</h1>
+    <p class="text-slate-600 text-sm mt-1">{{ t('reg.subtitle') }}</p>
+
+    <form method="post" action="/registreties" class="mt-6 space-y-4" onsubmit="lockSubmit(this)">
+      <div>
+        <label for="full_name" class="block text-sm font-medium mb-1">{{ t('reg.name') }}</label>
+        <input id="full_name" name="full_name" type="text" required autocomplete="name"
+               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none">
+      </div>
+      <div>
+        <label for="email" class="block text-sm font-medium mb-1">{{ t('reg.email') }}</label>
+        <input id="email" name="email" type="email" required autocomplete="email"
+               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none">
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium mb-1">{{ t('reg.password') }}</label>
+        <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password"
+               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none">
+      </div>
+      <div>
+        <label for="account_number" class="block text-sm font-medium mb-1">{{ t('reg.account') }}</label>
+        <input id="account_number" name="account_number" type="text" required
+               aria-describedby="acc_hint"
+               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none">
+        <p id="acc_hint" class="text-xs text-slate-600 mt-1">{{ t('reg.account_hint') }}</p>
+      </div>
+      <button type="submit" class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">{{ t('reg.submit') }}</button>
+    </form>
+
+    <p class="mt-6 text-sm text-slate-600">{{ t('reg.have_account') }}
+      <a href="/login" class="brand-text underline">{{ t('nav.login') }}</a></p>
+  </div>
+</section>
+{% endblock %}
