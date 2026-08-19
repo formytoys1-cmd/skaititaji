@@ -54,7 +54,17 @@
   <form method="post" action="/admin/inbox/{{ thread.id }}/reply" enctype="multipart/form-data" class="mt-6">
     <textarea name="body" rows="3" placeholder="Atbilde vai precizējums aģentam..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
     <div class="flex items-center justify-between gap-3 mt-2 flex-wrap">
-      <input type="file" name="files" multiple aria-label="Pievienot failus" class="text-xs file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:brand-bg file:text-white">
+      <div class="flex items-center gap-3">
+        <label class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg brand-bg text-white font-medium text-sm hover:opacity-90 focus-within:ring-2 focus-within:ring-sky-300">
+          <span aria-hidden="true">📎</span>
+          <span>{{ t('inbox.choose_files') }}</span>
+          <input type="file" name="files" multiple class="sr-only"
+                 aria-label="{{ t('inbox.choose_files') }}"
+                 data-none="{{ t('inbox.no_file') }}" data-many="{{ t('inbox.files_n') }}"
+                 onchange="fpUpdate(this)">
+        </label>
+        <span class="file-name text-xs text-slate-600">{{ t('inbox.no_file') }}</span>
+      </div>
       <button class="px-5 py-2.5 rounded-lg brand-bg text-white font-semibold">Sūtīt aģentam</button>
     </div>
   </form>

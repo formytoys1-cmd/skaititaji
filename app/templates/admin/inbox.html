@@ -32,8 +32,18 @@
         <input name="area" placeholder="Zona / lapa (piem. iedzīvotāja panelis)" class="w-full px-3 py-2 rounded-lg border border-slate-300">
         <textarea name="body" required rows="6" placeholder="Detalizēti aprakstiet, ko izmainīt..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
         <div>
-          <label class="block text-xs text-slate-500 mb-1">📎 Pievienot failus (formas, ekrānšāviņi) — nav obligāti</label>
-          <input type="file" name="files" multiple aria-label="Pievienot failus" class="w-full text-xs file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:brand-bg file:text-white">
+          <label class="block text-xs text-slate-500 mb-1">📎 {{ t('inbox.attach_hint') }}</label>
+          <div class="flex items-center gap-3 flex-wrap">
+            <label class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg brand-bg text-white font-medium text-sm hover:opacity-90 focus-within:ring-2 focus-within:ring-sky-300">
+              <span aria-hidden="true">📎</span>
+              <span>{{ t('inbox.choose_files') }}</span>
+              <input type="file" name="files" multiple class="sr-only"
+                     aria-label="{{ t('inbox.choose_files') }}"
+                     data-none="{{ t('inbox.no_file') }}" data-many="{{ t('inbox.files_n') }}"
+                     onchange="fpUpdate(this)">
+            </label>
+            <span class="file-name text-xs text-slate-600">{{ t('inbox.no_file') }}</span>
+          </div>
         </div>
         <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Nosūtīt aģentam</button>
       </form>

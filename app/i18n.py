@@ -207,6 +207,18 @@ T: dict[str, dict[str, str]] = {
                         "en": "verification due soon"},
     "res.verify_expired": {"lv": "verifikācija beigusies",
                            "ru": "поверка истекла", "en": "verification expired"},
+    # ---- Консоль модератора: файловое поле -------------------------------- #
+    "inbox.choose_files": {"lv": "Izvēlēties failus", "ru": "Выбрать файлы",
+                           "en": "Choose files"},
+    "inbox.no_file": {"lv": "Fails nav izvēlēts", "ru": "Файл не выбран",
+                      "en": "No file chosen"},
+    "inbox.files_n": {"lv": "faili izvēlēti", "ru": "файлов выбрано",
+                      "en": "files selected"},
+    "inbox.attach_hint": {
+        "lv": "Pievienot failus (formas, ekrānšāviņi) — nav obligāti",
+        "ru": "Прикрепить файлы (формы, скриншоты) — необязательно",
+        "en": "Attach files (forms, screenshots) — optional",
+    },
     # ---- История и график (B) -------------------------------------------- #
     "res.history": {"lv": "Rādījumu vēsture", "ru": "История показаний",
                     "en": "Reading history"},

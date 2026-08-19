@@ -154,6 +154,16 @@
       if (btn) { setTimeout(function(){ btn.disabled = true; btn.style.opacity = '0.7'; btn.setAttribute('aria-busy','true'); }, 0); }
       return true;
     }
+    // Кастомное файловое поле: обновляет подпись с именем/количеством файлов.
+    function fpUpdate(input){
+      var wrap = input.closest('label') ? input.closest('label').parentElement : input.parentElement;
+      var el = wrap ? wrap.querySelector('.file-name') : null;
+      if (!el) return;
+      var n = input.files ? input.files.length : 0;
+      if (n === 0) { el.textContent = input.dataset.none || ''; }
+      else if (n === 1) { el.textContent = input.files[0].name; }
+      else { el.textContent = n + ' ' + (input.dataset.many || ''); }
+    }
   </script>
 </body>
 </html>
