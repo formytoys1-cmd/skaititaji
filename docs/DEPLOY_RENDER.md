@@ -1,45 +1,39 @@
-# Деплой за 5 шагов через ваш Google-аккаунт (Render.com, бесплатно, без карты)
+# Деплой на Render.com — вы уже на нужном экране
 
-Пароль от Gmail никому вводить не нужно — вы просто входите в Render кнопкой
-«Sign in with Google». Всё готово к деплою: в проекте есть [`render.yaml`](../render.yaml).
+Вы вошли в Render (Marina's workspace) и на шаге «Create a new Web Service».
 
-## Шаги
+## Шаг 1 — Choose service
+Нажмите **Web Services → «New Web Service →»** (динамическое приложение).
+НЕ «Static Sites» (это для статики), не «Private Services», не «Background Workers».
 
-1. **GitHub (вход через Google).** Откройте github.com → «Sign up»/«Sign in» и
-   войдите через ваш Google‑аккаунт `formytoys1@gmail.com`. Создайте новый
-   **пустой** репозиторий, например `skaititaji`.
+## Шаг 2 — нужен Git-репозиторий
+Render деплоит из Git. Если репозитория с кодом ещё нет — сначала залейте код на
+GitHub (тем же входом через Google).
 
-2. **Загрузите код.** Два способа:
-   - **Просто (без консоли):** на странице репозитория → «uploading an existing
-     file» → перетащите содержимое архива `skaititaji_deploy.zip` (я его
-     подготовил, см. ниже) → Commit.
-   - **Через консоль:** в папке проекта выполните
-     ```bash
-     git remote add origin https://github.com/<ваш-логин>/skaititaji.git
-     git push -u origin main
-     ```
+### Как залить код на GitHub (правильно)
+1. github.com → «New repository» → имя `skaititaji` → **Public** → Create.
+2. На странице пустого репозитория → **«uploading an existing file»**.
+3. ВАЖНО: GitHub-загрузчик **НЕ распаковывает .zip**. Перетаскивайте
+   **распакованные файлы и папки**, а не архив.
+   Готовая распакованная папка лежит здесь (в файлах сессии):
+   `.../session-state/<id>/files/skaititaji_upload/`
+   Откройте её, выделите всё содержимое (app, docs, tools, render.yaml,
+   requirements.txt, Dockerfile, README.md, …) и перетащите в окно загрузки GitHub.
+4. Внизу нажмите **Commit changes**.
 
-3. **Render (вход через Google).** Откройте dashboard.render.com → «Sign in with
-   Google» тем же аккаунтом.
+> Через консоль (если удобнее): в папке проекта
+> `git remote add origin https://github.com/<логин>/skaititaji.git && git push -u origin main`
 
-4. **Создайте сервис.** «New +» → **Blueprint** → выберите ваш репозиторий
-   `skaititaji`. Render прочитает `render.yaml` и сам настроит web‑сервис
-   (бесплатный план). Нажмите «Apply».
+## Шаг 3 — Configure (Render заполнит из render.yaml)
+- **Language:** Python 3
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Instance Type:** **Free**
 
-5. **Готово.** Через пару минут Render даст публичный адрес вида
-   `https://skaititaji-demo.onrender.com`. Демо‑доступы прежние
-   (`admin@demo.lv` / `demo1234`, страница `/demo`).
+Нажмите **Deploy Web Service**.
 
-> Бесплатный инстанс «засыпает» при простое — первый запрос будит его за
-> несколько секунд. Каждый `git push` авто‑деплоит новую версию.
-
-## Ещё проще — доверить деплой мне
-
-Если не хотите кликать сами, дайте мне **отзываемые токены** (не пароль):
-- **GitHub Fine‑grained token** (права `Contents: R/W`, `Administration: R/W`) —
-  я создам репозиторий и залью код.
-- **Render API key** (dashboard.render.com → Account Settings → API Keys) —
-  я создам сервис из репозитория.
-
-Вставьте их в чат — я задеплою и скажу URL, после чего вы сразу отзовёте токены.
-В репозиторий/логи токены не попадают.
+## Шаг 4 — Готово
+Через ~2 минуты Render даст публичный адрес `https://skaititaji-...onrender.com`.
+Демо-доступы: `admin@demo.lv` / `resident@demo.lv` / `manager@demo.lv`, пароль
+`demo1234`, страница `/demo`. Бесплатный инстанс «засыпает» при простое — первый
+запрос будит его за ~30 сек.
