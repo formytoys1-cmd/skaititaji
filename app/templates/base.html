@@ -24,6 +24,8 @@
     .brand-bg { background-color: {{ brand_color|default('#0369a1') }}; }
     .brand-text { color: {{ brand_color|default('#0369a1') }}; }
     .brand-border { border-color: {{ brand_color|default('#0369a1') }}; }
+    /* Файловое поле: плавная смена цвета кнопки при активации/выборе */
+    .fp-btn { transition: background-color .15s ease; }
     /* Доступность: видимый фокус для клавиатуры (WCAG 2.4.7) */
     :focus-visible { outline: 3px solid {{ brand_color|default('#0369a1') }}; outline-offset: 2px; border-radius: 4px; }
     /* Skip-link (WCAG 2.4.1) */
@@ -154,15 +156,38 @@
       if (btn) { setTimeout(function(){ btn.disabled = true; btn.style.opacity = '0.7'; btn.setAttribute('aria-busy','true'); }, 0); }
       return true;
     }
-    // Кастомное файловое поле: обновляет подпись с именем/количеством файлов.
+    // Кастомное файловое поле: состояния кнопки + подпись с именем/кол-вом.
+    // Цвет задаём inline-стилем (надёжно перекрывает .brand-bg).
+    var FP_GRAY = '#64748b', FP_GREEN = '#047857';
+    // fpActivate — при нажатии кнопка становится серой (была нажата/активирована).
+    function fpActivate(label){
+      if (label && label.getAttribute('data-fp') !== 'done') {
+        label.style.backgroundColor = FP_GRAY;
+        label.setAttribute('data-fp', 'active');
+      }
+    }
     function fpUpdate(input){
-      var wrap = input.closest('label') ? input.closest('label').parentElement : input.parentElement;
+      var label = input.closest('label');
+      var wrap = label ? label.parentElement : input.parentElement;
       var el = wrap ? wrap.querySelector('.file-name') : null;
-      if (!el) return;
+      var icon = label ? label.querySelector('.fp-icon') : null;
       var n = input.files ? input.files.length : 0;
-      if (n === 0) { el.textContent = input.dataset.none || ''; }
-      else if (n === 1) { el.textContent = input.files[0].name; }
-      else { el.textContent = n + ' ' + (input.dataset.many || ''); }
+      if (label) {
+        if (n > 0) {                       // файл выбран — зелёный + галочка
+          label.style.backgroundColor = FP_GREEN;
+          label.setAttribute('data-fp', 'done');
+          if (icon) icon.textContent = '✓';
+        } else {                           // выбор отменён — остаётся серой (активирована)
+          label.style.backgroundColor = FP_GRAY;
+          label.setAttribute('data-fp', 'active');
+          if (icon) icon.textContent = '📎';
+        }
+      }
+      if (el) {
+        if (n === 0) { el.textContent = input.dataset.none || ''; }
+        else if (n === 1) { el.textContent = input.files[0].name; }
+        else { el.textContent = n + ' ' + (input.dataset.many || ''); }
+      }
     }
   </script>
 </body>

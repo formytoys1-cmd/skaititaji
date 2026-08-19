@@ -34,8 +34,8 @@
         <div>
           <label class="block text-xs text-slate-500 mb-1">📎 {{ t('inbox.attach_hint') }}</label>
           <div class="flex items-center gap-3 flex-wrap">
-            <label class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg brand-bg text-white font-medium text-sm hover:opacity-90 focus-within:ring-2 focus-within:ring-sky-300">
-              <span aria-hidden="true">📎</span>
+            <label class="fp-btn cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg brand-bg text-white font-medium text-sm hover:opacity-90 focus-within:ring-2 focus-within:ring-sky-300" onclick="fpActivate(this)">
+              <span class="fp-icon" aria-hidden="true">📎</span>
               <span>{{ t('inbox.choose_files') }}</span>
               <input type="file" name="files" multiple class="sr-only"
                      aria-label="{{ t('inbox.choose_files') }}"
