@@ -23,6 +23,8 @@ from sqlmodel import Session
 from app.database import engine, init_db
 from app.feedback_service import (
     add_message,
+    attachment_path,
+    attachments_for_thread,
     messages_for,
     set_status,
     threads_awaiting_agent,
@@ -50,6 +52,17 @@ def _thread_dict(session: Session, t: FeedbackThread, with_messages: bool = Fals
                 "at": m.created_at.isoformat(),
             }
             for m in messages_for(session, t.id)
+        ]
+        atts = attachments_for_thread(session, t.id)
+        d["attachments"] = [
+            {
+                "id": a.id,
+                "filename": a.filename,
+                "size": a.size,
+                "content_type": a.content_type,
+                "path": attachment_path(a),
+            }
+            for a in atts
         ]
     return d
 

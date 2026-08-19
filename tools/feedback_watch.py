@@ -24,7 +24,12 @@ import time
 from sqlmodel import Session
 
 from app.database import engine, init_db
-from app.feedback_service import messages_for, threads_awaiting_agent
+from app.feedback_service import (
+    attachment_path,
+    attachments_for_thread,
+    messages_for,
+    threads_awaiting_agent,
+)
 
 
 def snapshot(session: Session) -> list[dict]:
@@ -32,6 +37,7 @@ def snapshot(session: Session) -> list[dict]:
     out = []
     for t in threads:
         msgs = messages_for(session, t.id)
+        atts = attachments_for_thread(session, t.id)
         out.append({
             "id": t.id,
             "title": t.title,
@@ -43,6 +49,10 @@ def snapshot(session: Session) -> list[dict]:
             "messages": [
                 {"author": m.author.value, "body": m.body,
                  "at": m.created_at.isoformat()} for m in msgs
+            ],
+            "attachments": [
+                {"id": a.id, "filename": a.filename, "path": attachment_path(a)}
+                for a in atts
             ],
         })
     return out

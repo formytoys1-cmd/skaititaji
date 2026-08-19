@@ -33,10 +33,28 @@
     {% endfor %}
   </div>
 
+  <!-- Вложения -->
+  {% if attachments %}
+  <div class="mt-6 bg-white rounded-2xl border border-slate-200 p-4">
+    <div class="font-semibold text-sm mb-2">📎 Pievienotie faili ({{ attachments|length }})</div>
+    <div class="flex flex-wrap gap-2">
+      {% for a in attachments %}
+      <a href="/admin/inbox/attachment/{{ a.id }}" target="_blank"
+         class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 hover:border-slate-300 text-sm">
+        <span>📄</span>
+        <span class="truncate max-w-[220px]">{{ a.filename }}</span>
+        <span class="text-slate-400 text-xs">{{ (a.size / 1024)|round(1) }} KB</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Ответ модератора -->
-  <form method="post" action="/admin/inbox/{{ thread.id }}/reply" class="mt-6">
-    <textarea name="body" rows="3" required placeholder="Atbilde vai precizējums aģentam..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
-    <div class="flex justify-end mt-2">
+  <form method="post" action="/admin/inbox/{{ thread.id }}/reply" enctype="multipart/form-data" class="mt-6">
+    <textarea name="body" rows="3" placeholder="Atbilde vai precizējums aģentam..." class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea>
+    <div class="flex items-center justify-between gap-3 mt-2 flex-wrap">
+      <input type="file" name="files" multiple class="text-xs file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:brand-bg file:text-white">
       <button class="px-5 py-2.5 rounded-lg brand-bg text-white font-semibold">Sūtīt aģentam</button>
     </div>
   </form>

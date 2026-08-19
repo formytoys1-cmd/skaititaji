@@ -12,18 +12,23 @@
 """
 from __future__ import annotations
 
+import os
+import uuid
 from datetime import datetime
 from typing import Optional
 
 from sqlmodel import Session, select
 
 from app.models import (
+    FeedbackAttachment,
     FeedbackAuthor,
     FeedbackMessage,
     FeedbackScope,
     FeedbackStatus,
     FeedbackThread,
 )
+
+UPLOAD_DIR = os.path.join("data", "feedback_uploads")
 
 ACTIVE_STATUSES = {
     FeedbackStatus.NEW,
@@ -100,6 +105,52 @@ def messages_for(session: Session, thread_id: int) -> list[FeedbackMessage]:
             .order_by(FeedbackMessage.created_at, FeedbackMessage.id)
         ).all()
     )
+
+
+def save_attachment(
+    session: Session,
+    thread_id: int,
+    *,
+    filename: str,
+    data: bytes,
+    content_type: Optional[str] = None,
+    message_id: Optional[int] = None,
+) -> FeedbackAttachment:
+    """Сохраняет загруженный файл на диск и создаёт запись вложения."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    safe_ext = os.path.splitext(filename)[1][:12]
+    stored_name = f"{uuid.uuid4().hex}{safe_ext}"
+    path = os.path.join(UPLOAD_DIR, stored_name)
+    with open(path, "wb") as f:
+        f.write(data)
+    att = FeedbackAttachment(
+        thread_id=thread_id,
+        message_id=message_id,
+        filename=filename,
+        stored_name=stored_name,
+        content_type=content_type,
+        size=len(data),
+    )
+    session.add(att)
+    session.commit()
+    session.refresh(att)
+    return att
+
+
+def attachments_for_thread(
+    session: Session, thread_id: int
+) -> list[FeedbackAttachment]:
+    return list(
+        session.exec(
+            select(FeedbackAttachment)
+            .where(FeedbackAttachment.thread_id == thread_id)
+            .order_by(FeedbackAttachment.created_at, FeedbackAttachment.id)
+        ).all()
+    )
+
+
+def attachment_path(att: FeedbackAttachment) -> str:
+    return os.path.join(UPLOAD_DIR, att.stored_name)
 
 
 def list_threads(

@@ -306,3 +306,17 @@ class FeedbackMessage(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utcnow)
 
     thread: Optional[FeedbackThread] = Relationship(back_populates="messages")
+
+
+class FeedbackAttachment(SQLModel, table=True):
+    """Файл, прикреплённый модератором к треду/сообщению (бумажные формы и т.п.)."""
+    __tablename__ = "feedback_attachment"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    thread_id: int = Field(foreign_key="feedback_thread.id", index=True)
+    message_id: Optional[int] = Field(default=None, foreign_key="feedback_message.id")
+    filename: str                                       # исходное имя файла
+    stored_name: str                                    # имя на диске (uuid)
+    content_type: Optional[str] = None
+    size: int = Field(default=0)
+    created_at: datetime = Field(default_factory=utcnow)
