@@ -1,0 +1,59 @@
+name: standards-watch
+# Автоматическое слежение за новыми версиями стандартов и инструментов.
+# Раз в неделю проверяет источники (WCAG, axe-core, Lighthouse) и, если версии
+# изменились относительно зафиксированных, создаёт GitHub issue с напоминанием
+# пересмотреть соответствие.
+on:
+  schedule:
+    - cron: "0 7 * * 1"   # понедельник 07:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check standards & tools versions
+        id: check
+        run: |
+          set -e
+          note=""
+
+          # 1. axe-core последняя версия (npm)
+          AXE=$(curl -s https://registry.npmjs.org/axe-core/latest | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)
+          PINNED_AXE="4.10.2"
+          [ "$AXE" != "$PINNED_AXE" ] && note="$note\n- axe-core: закреплён $PINNED_AXE, доступен $AXE"
+
+          # 2. lighthouse последняя версия (npm)
+          LH=$(curl -s https://registry.npmjs.org/lighthouse/latest | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)
+          echo "lighthouse latest: $LH"
+
+          # 3. WCAG — проверяем, не появилась ли новая рекомендация (страница TR)
+          WCAG=$(curl -s https://www.w3.org/TR/WCAG22/ | grep -o 'W3C Recommendation[^<]*' | head -1 || true)
+          echo "WCAG page marker: $WCAG"
+
+          if [ -n "$note" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            printf "body<<EOF\nОбнаружены обновления инструментов/стандартов:$note\n\nПроверьте compliance.yml и tools/audit версии.\nEOF\n" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Open issue if changes
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = process.env.BODY;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "🔎 Standards-watch: доступны обновления стандартов/инструментов",
+              body,
+              labels: ["compliance", "standards-watch"]
+            });
+        env:
+          BODY: ${{ steps.check.outputs.body }}

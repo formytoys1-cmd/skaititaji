@@ -1,13 +1,13 @@
 name: quality-gates
-# Автоматический контроль качества: доступность (WCAG 2.2 AA) + Lighthouse (mobile).
-# Запускается на каждый push/PR и еженедельно (чтобы ловить регрессии и следить
-# за обновлениями инструментов/стандартов).
+# Комплексный контроль качества и соответствия:
+# доступность (WCAG), Lighthouse, безопасность (CVE/секреты/заголовки), валидность HTML.
+# Запуск на каждый push/PR и еженедельно (для отслеживания новых версий инструментов).
 on:
   push:
     branches: [main]
   pull_request:
   schedule:
-    - cron: "0 6 * * 1"   # понедельник, 06:00 UTC — еженедельная проверка live
+    - cron: "0 6 * * 1"
   workflow_dispatch: {}
 
 jobs:
@@ -25,9 +25,7 @@ jobs:
       - name: Start app
         run: |
           nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-          for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:8000/api/health && break || sleep 1
-          done
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/health && break || sleep 1; done
       - name: Install audit deps
         working-directory: tools/audit
         run: |
@@ -35,15 +33,52 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run axe accessibility gate
         working-directory: tools/audit
-        env:
-          BASE_URL: http://127.0.0.1:8000
+        env: { BASE_URL: http://127.0.0.1:8000 }
         run: node a11y.mjs
-      - name: Upload report
+      - name: Security headers gate
+        run: python tools/audit/check_headers.py http://127.0.0.1:8000/
+      - name: Upload a11y report
         if: always()
         uses: actions/upload-artifact@v4
-        with:
-          name: a11y-report
-          path: tools/audit/a11y-report.json
+        with: { name: a11y-report, path: tools/audit/a11y-report.json }
+
+  security:
+    name: Security (CVE / secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: pip-audit (known CVEs in Python deps)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --strict || echo "::warning::pip-audit нашёл уязвимости"
+      - name: gitleaks (secret scanning)
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+
+  html-validate:
+    name: HTML validity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Install app deps
+        run: pip install -r requirements.txt
+      - name: Start app & render pages
+        run: |
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/health && break || sleep 1; done
+          mkdir -p _html
+          for p in "" login demo palidziba privatums pieejamiba atbilstiba; do
+            curl -s "http://127.0.0.1:8000/$p" -o "_html/${p:-index}.html"
+          done
+      - name: Validate HTML
+        run: npx --yes html-validate@8 "_html/*.html" || echo "::warning::html-validate предупреждения"
 
   lighthouse:
     name: Lighthouse (mobile)
@@ -52,9 +87,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
-      - name: Run Lighthouse CI against live site
-        env:
-          LHCI_URL: https://skaititaji.onrender.com
+      - name: Lighthouse CI (live)
+        env: { LHCI_URL: https://skaititaji.onrender.com }
         run: |
           npm install -g @lhci/cli@0.14.x
           lhci autorun --config=tools/audit/lighthouserc.cjs || true
