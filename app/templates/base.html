@@ -98,9 +98,9 @@
   </script>
   {% endif %}
 
-  {% if messages %}
+  {% if flash_messages %}
   <div class="max-w-6xl mx-auto w-full px-4 mt-4" role="status" aria-live="polite">
-    {% for m in messages %}
+    {% for m in flash_messages %}
     <div class="mb-2 px-4 py-3 rounded-lg text-sm
       {% if m.level == 'error' %}bg-red-50 text-red-800 border border-red-200
       {% elif m.level == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
