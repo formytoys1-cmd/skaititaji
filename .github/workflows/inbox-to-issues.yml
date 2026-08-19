@@ -1,0 +1,33 @@
+# Мост «консоль обратной связи → GitHub Issues».
+# Опрашивает боевой инбокс и создаёт Issue на каждое сообщение модератора,
+# требующее внимания. Issue можно назначить на GitHub Copilot coding agent
+# для автономного PR — всё работает без запущенной локальной сессии.
+name: inbox-to-issues
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # каждые 15 минут
+  workflow_dispatch: {}
+permissions:
+  issues: write
+  contents: read
+concurrency:
+  group: inbox-to-issues
+  cancel-in-progress: false
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install httpx
+      - name: Bridge inbox -> issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          SKAIT_BASE_URL: https://skaititaji.onrender.com
+        run: python tools/inbox_to_issues.py
