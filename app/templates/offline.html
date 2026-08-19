@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ t('offline.title') }} — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-lg mx-auto px-4 py-16 text-center">
+  <div class="w-16 h-16 mx-auto rounded-2xl brand-bg text-white flex items-center justify-center text-3xl" aria-hidden="true">📴</div>
+  <h1 class="text-2xl font-bold mt-4">{{ t('offline.title') }}</h1>
+  <p class="text-slate-600 mt-2">{{ t('offline.body') }}</p>
+  <button type="button" onclick="location.reload()"
+          class="mt-6 px-5 py-2.5 rounded-xl brand-bg text-white font-semibold">{{ t('offline.retry') }}</button>
+  <p class="mt-4 text-sm"><a href="/" class="brand-text underline">{{ t('offline.home') }}</a></p>
+</section>
+{% endblock %}

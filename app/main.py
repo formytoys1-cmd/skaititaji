@@ -14,7 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.database import get_session, init_db
 from app.models import MeterType, Organization
-from app.routers import admin, agent_api, auth, manager, management, moderator, public, resident
+from app.routers import admin, agent_api, auth, manager, management, moderator, public, pwa, resident
 from app.seed import ensure_demo_extras, seed_demo
 
 
@@ -69,6 +69,8 @@ _CSP = (
     "img-src 'self' data:; "
     "font-src 'self' data:; "
     "connect-src 'self'; "
+    "worker-src 'self'; "
+    "manifest-src 'self'; "
     "frame-ancestors 'none'; "
     "base-uri 'self'; "
     "form-action 'self'; "
@@ -119,6 +121,7 @@ app.include_router(management.router)
 app.include_router(admin.router)
 app.include_router(moderator.router)
 app.include_router(agent_api.router)
+app.include_router(pwa.router)
 
 
 # Кастомная 404-страница (брендированная, 3 языка).

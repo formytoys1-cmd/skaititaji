@@ -6,6 +6,14 @@
   <meta name="color-scheme" content="light">
   <meta name="description" content="{{ app_tagline }}">
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <!-- PWA: манифест, тема, иконки для установки на iOS/Android -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0369a1">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{ app_name }}">
   <link rel="canonical" href="{{ request.base_url }}{{ request.url.path[1:] }}">
   <!-- Open Graph (корректный вид при шаринге ссылки) -->
   <meta property="og:type" content="website">
@@ -189,6 +197,62 @@
         else { el.textContent = n + ' ' + (input.dataset.many || ''); }
       }
     }
+  </script>
+
+  <!-- PWA: кнопка установки (Android/Chrome) и подсказка для iOS -->
+  <div id="pwaInstall" hidden
+       class="fixed bottom-3 inset-x-3 md:left-4 md:right-auto md:max-w-sm z-40 bg-white border border-slate-300 rounded-xl shadow-lg p-4">
+    <div class="flex items-start gap-3">
+      <img src="/static/icons/icon-192.png" alt="" width="40" height="40" class="rounded-lg">
+      <div class="flex-1">
+        <p id="pwaInstallText" class="text-sm text-slate-700">{{ t('pwa.install') }}</p>
+        <div class="mt-2 flex items-center gap-2">
+          <button id="pwaInstallBtn" type="button" class="px-4 py-2 rounded-lg brand-bg text-white text-sm font-semibold">{{ t('pwa.install') }}</button>
+          <button type="button" onclick="pwaDismiss()" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">{{ t('pwa.dismiss') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Регистрация service worker (PWA) ---
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('/sw.js').catch(function(e){ console.warn('SW reg failed', e); });
+      });
+    }
+    // --- Установка приложения ---
+    (function(){
+      var box = document.getElementById('pwaInstall');
+      var btn = document.getElementById('pwaInstallBtn');
+      var txt = document.getElementById('pwaInstallText');
+      var deferred = null;
+      var IOS_HINT = {{ t('pwa.install_ios')|tojson }};
+      function dismissed(){ try { return localStorage.getItem('pwaDismiss')==='1'; } catch(e){ return false; } }
+      function isStandalone(){
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      }
+      window.pwaDismiss = function(){ try { localStorage.setItem('pwaDismiss','1'); } catch(e){} if (box) box.hidden = true; };
+
+      // Android/Chrome: перехватываем нативное приглашение
+      window.addEventListener('beforeinstallprompt', function(e){
+        e.preventDefault(); deferred = e;
+        if (!dismissed() && !isStandalone() && box) box.hidden = false;
+      });
+      if (btn) btn.addEventListener('click', function(){
+        if (deferred) { deferred.prompt(); deferred.userChoice.finally(function(){ deferred = null; box.hidden = true; }); }
+      });
+
+      // iOS Safari: нет beforeinstallprompt — показываем инструкцию
+      var ua = window.navigator.userAgent;
+      var isIOS = /iphone|ipad|ipod/i.test(ua);
+      var isSafari = isIOS && /safari/i.test(ua) && !/crios|fxios/i.test(ua);
+      if (isIOS && isSafari && !isStandalone() && !dismissed()) {
+        if (txt) txt.textContent = IOS_HINT;
+        if (btn) btn.hidden = true;
+        if (box) box.hidden = false;
+      }
+    })();
   </script>
 </body>
 </html>

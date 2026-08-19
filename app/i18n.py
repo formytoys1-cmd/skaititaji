@@ -26,6 +26,24 @@ T: dict[str, dict[str, str]] = {
     "nav.demo": {"lv": "Demo", "ru": "Демо", "en": "Demo"},
     "nav.login": {"lv": "Ieeja", "ru": "Вход", "en": "Log in"},
     "nav.help": {"lv": "Palīdzība", "ru": "Помощь", "en": "Help"},
+    # ---- PWA / офлайн / установка ----------------------------------------- #
+    "offline.title": {"lv": "Nav savienojuma", "ru": "Нет соединения",
+                      "en": "You're offline"},
+    "offline.body": {
+        "lv": "Šķiet, ka interneta savienojums ir zudis. Pārbaudiet tīklu un mēģiniet vēlreiz.",
+        "ru": "Похоже, пропало интернет-соединение. Проверьте сеть и попробуйте снова.",
+        "en": "It looks like your internet connection is gone. Check your network and try again.",
+    },
+    "offline.retry": {"lv": "Mēģināt vēlreiz", "ru": "Повторить", "en": "Retry"},
+    "offline.home": {"lv": "Uz sākumu", "ru": "На главную", "en": "Go home"},
+    "pwa.install": {"lv": "Instalēt lietotni", "ru": "Установить приложение",
+                    "en": "Install app"},
+    "pwa.install_ios": {
+        "lv": "Lai instalētu: nospiediet «Kopīgot» un «Pievienot sākuma ekrānam».",
+        "ru": "Чтобы установить: нажмите «Поделиться», затем «На экран Домой».",
+        "en": "To install: tap Share, then “Add to Home Screen”.",
+    },
+    "pwa.dismiss": {"lv": "Aizvērt", "ru": "Закрыть", "en": "Dismiss"},
     "footer.copy": {
         "lv": "© Skaitītāji — demo. Integrācija: Visma Horizon REST API.",
         "ru": "© Skaitītāji — демо. Интеграция: Visma Horizon REST API.",
