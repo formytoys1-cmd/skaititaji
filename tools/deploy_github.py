@@ -15,24 +15,24 @@ import json
 import os
 import subprocess
 import sys
-import urllib.request
+
+import httpx
 
 
 def _api(method: str, url: str, token: str, payload: dict | None = None) -> dict:
-    data = json.dumps(payload).encode() if payload is not None else None
-    req = urllib.request.Request(url, data=data, method=method)
-    req.add_header("Authorization", f"Bearer {token}")
-    req.add_header("Accept", "application/vnd.github+json")
-    req.add_header("X-GitHub-Api-Version", "2022-11-28")
-    req.add_header("User-Agent", "skaititaji-deploy")
-    if data is not None:
-        req.add_header("Content-Type", "application/json")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "skaititaji-deploy",
+    }
     try:
-        with urllib.request.urlopen(req) as r:
-            return json.loads(r.read().decode() or "{}")
-    except urllib.error.HTTPError as e:
-        body = e.read().decode()
-        raise SystemExit(f"GitHub API {e.code}: {body}")
+        r = httpx.request(method, url, headers=headers, json=payload, timeout=30)
+    except Exception as e:
+        raise SystemExit(f"Сетевая ошибка: {e}")
+    if r.status_code >= 400:
+        raise SystemExit(f"GitHub API {r.status_code}: {r.text}")
+    return r.json() if r.content else {}
 
 
 def main(argv: list[str]) -> int:

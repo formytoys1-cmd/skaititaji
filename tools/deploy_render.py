@@ -12,30 +12,28 @@
 """
 from __future__ import annotations
 
-import json
 import os
 import sys
-import time
-import urllib.request
+
+import httpx
 
 
 API = "https://api.render.com/v1"
 
 
 def _api(method: str, path: str, key: str, payload: dict | None = None):
-    data = json.dumps(payload).encode() if payload is not None else None
-    req = urllib.request.Request(API + path, data=data, method=method)
-    req.add_header("Authorization", f"Bearer {key}")
-    req.add_header("Accept", "application/json")
-    req.add_header("User-Agent", "skaititaji-deploy")
-    if data is not None:
-        req.add_header("Content-Type", "application/json")
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Accept": "application/json",
+        "User-Agent": "skaititaji-deploy",
+    }
     try:
-        with urllib.request.urlopen(req) as r:
-            body = r.read().decode()
-            return json.loads(body) if body else {}
-    except urllib.error.HTTPError as e:
-        raise SystemExit(f"Render API {e.code}: {e.read().decode()}")
+        r = httpx.request(method, API + path, headers=headers, json=payload, timeout=60)
+    except Exception as e:
+        raise SystemExit(f"Сетевая ошибка: {e}")
+    if r.status_code >= 400:
+        raise SystemExit(f"Render API {r.status_code}: {r.text}")
+    return r.json() if r.content else {}
 
 
 def main(argv: list[str]) -> int:
