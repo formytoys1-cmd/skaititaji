@@ -1,9 +1,11 @@
 """Точка входа FastAPI-приложения «Skaitītāji»."""
 from __future__ import annotations
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
@@ -16,11 +18,38 @@ from app.routers import admin, auth, manager, moderator, public, resident
 from app.seed import seed_demo
 
 
+async def _self_ping_loop() -> None:
+    """Keep-alive: пока приложение живо, периодически запрашивает свой публичный
+    URL, чтобы бесплатный инстанс Render не «засыпал» от простоя.
+
+    Работает только в проде (когда задан RENDER_EXTERNAL_URL или SELF_PING_URL).
+    Локально ничего не делает.
+    """
+    base = os.getenv("SELF_PING_URL") or os.getenv("RENDER_EXTERNAL_URL")
+    if not base:
+        return
+    url = base.rstrip("/") + "/api/health"
+    interval = int(os.getenv("SELF_PING_INTERVAL", "600"))  # 10 минут
+    # первая пауза, чтобы не пинговать во время старта
+    await asyncio.sleep(interval)
+    async with httpx.AsyncClient(timeout=20) as client:
+        while True:
+            try:
+                await client.get(url)
+            except Exception:
+                pass
+            await asyncio.sleep(interval)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     seed_demo()  # идемпотентно: создаёт демо-данные, если их ещё нет
-    yield
+    ping_task = asyncio.create_task(_self_ping_loop())
+    try:
+        yield
+    finally:
+        ping_task.cancel()
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
