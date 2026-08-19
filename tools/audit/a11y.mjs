@@ -33,8 +33,18 @@ const PAGES = [
   { url: '/admin/inbox', name: 'admin-console' },
 ];
 
+async function launch() {
+  // На некоторых окружениях бандл-Chromium несовместим — фолбэк на системный Chrome.
+  try {
+    return await chromium.launch();
+  } catch (e) {
+    console.warn('Бандл-Chromium не запустился, пробую системный Chrome:', e.message);
+    return await chromium.launch({ channel: 'chrome' });
+  }
+}
+
 async function run() {
-  const browser = await chromium.launch();
+  const browser = await launch();
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
 
