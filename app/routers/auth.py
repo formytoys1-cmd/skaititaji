@@ -13,6 +13,7 @@ from app.auth import (
     logout_user,
 )
 from app.config import settings
+from app.csrf import csrf_protect
 from app.database import get_session
 from app.i18n import normalize_lang
 from app.models import (
@@ -49,6 +50,7 @@ def login_submit(
     email: str = Form(...),
     password: str = Form(...),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     user = authenticate(session, email, password)
     if not user:
@@ -120,6 +122,7 @@ def register_submit(
     password: str = Form(...),
     account_number: str = Form(...),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     email = email.lower().strip()
     account_number = account_number.strip()

@@ -15,6 +15,7 @@
       <div class="font-semibold mb-1">{{ t('inbox.new_instruction') }}</div>
       <p class="text-xs text-slate-600 mb-4">{{ t('inbox.form_hint') }}</p>
       <form method="post" action="/admin/inbox" enctype="multipart/form-data" class="space-y-3 text-sm">
+{% include "_csrf.html" %}
         <input name="title" required placeholder="{{ t('inbox.title_ph') }}" class="w-full px-3 py-2 rounded-lg border border-slate-300">
         <div class="flex gap-2">
           <select name="scope" aria-label="{{ t('inbox.kind') }}" class="w-1/2 px-3 py-2 rounded-lg border border-slate-300">

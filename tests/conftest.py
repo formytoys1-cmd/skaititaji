@@ -84,3 +84,23 @@ def factory(session):
     from tests import factories
 
     return factories.Factory(session)
+
+
+def csrf_token(client) -> str:
+    """Возвращает актуальный CSRF-токен для сессии клиента (SEC-005).
+
+    Токен привязан к сессии и одинаков для всех форм, поэтому достаточно
+    один раз получить любую страницу с формой (например, /login).
+    """
+    import re
+
+    html = client.get("/login").text
+    m = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
+    assert m, "CSRF hidden field not found"
+    return m.group(1)
+
+
+@pytest.fixture()
+def csrf(client):
+    """Фикстура-помощник: CSRF-токен текущей сессии клиента."""
+    return csrf_token(client)

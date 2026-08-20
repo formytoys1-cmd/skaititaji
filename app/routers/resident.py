@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session
 
 from app.auth import require_user
+from app.csrf import csrf_protect
 from app.database import get_session
 from app.models import Meter, Organization, ReadingSource, User, UserRole
 from app.services import (
@@ -79,6 +80,7 @@ async def submit(
     request: Request,
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     """Приём формы подачи показаний. Поля: value_<meter_id>=..."""
     period = current_period()

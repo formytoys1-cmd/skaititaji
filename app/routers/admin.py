@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session, func, select
 
 from app.auth import require_user
+from app.csrf import csrf_protect
 from app.database import get_session
 from app.integrations.registry import get_integration
 from app.models import (
@@ -71,6 +72,7 @@ def add_meter_type(
     max_plausible_consumption: float = Form(100.0),
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     """Добавить новый тип счётчика — демонстрация расширяемости без кода."""
     if user.role != UserRole.SUPERADMIN:
@@ -107,6 +109,7 @@ def toggle_meter_type(
     request: Request,
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     if user.role != UserRole.SUPERADMIN:
         return RedirectResponse("/", 303)

@@ -14,6 +14,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session, func, select
 
 from app.auth import require_user
+from app.csrf import csrf_protect
 from app.database import get_session
 from app.models import (
     Building,
@@ -72,6 +73,7 @@ def create_building(
     external_id: str = Form(""),
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     org = _manager_org(session, user)
     if not org:
@@ -125,6 +127,7 @@ def create_unit(
     area_m2: str = Form(""),
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     org = _manager_org(session, user)
     if not org:
@@ -188,6 +191,7 @@ def create_meter(
     initial_value: str = Form("0"),
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     org = _manager_org(session, user)
     if not org:

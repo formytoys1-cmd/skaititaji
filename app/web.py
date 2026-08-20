@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import settings
+from app.csrf import get_csrf_token
 from app.i18n import LANG_NAMES, LANGS, meter_name, normalize_lang, t
 from app.models import Organization, User
 
@@ -71,6 +72,7 @@ def render(
         "t": lambda key: t(lang, key),
         "meter_name": lambda mt: meter_name(mt, lang),
         "announcement": _announcement(org, lang),
+        "csrf_token": get_csrf_token(request),
         "today": __import__("datetime").date.today(),
     }
     if context:

@@ -11,6 +11,7 @@
       <a href="/parvalde/eksports.csv" class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-medium text-sm inline-flex items-center gap-1">
         <span aria-hidden="true">⬇️</span>{{ t('res.export_csv') }}</a>
       <form method="post" action="/parvalde/sync" onsubmit="lockSubmit(this)">
+{% include "_csrf.html" %}
         <button class="px-5 py-2.5 rounded-xl brand-bg text-white font-semibold"><span aria-hidden="true">⟳</span> Sinhronizēt ar Visma Horizon</button>
       </form>
     </div>

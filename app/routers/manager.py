@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session, select
 
 from app.auth import require_user
+from app.csrf import csrf_protect
 from app.database import get_session
 from app.integrations.registry import get_integration
 from app.models import (
@@ -185,6 +186,7 @@ def sync_to_visma(
     request: Request,
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     """Выгрузить принятые показания текущего периода в Visma Horizon."""
     if not _require_manager(user):

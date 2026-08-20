@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from sqlmodel import Session
 
 from app.auth import require_user
+from app.csrf import csrf_protect
 from app.database import get_session
 from app.feedback_service import (
     add_message,
@@ -108,6 +109,7 @@ async def create(
     files: list[UploadFile] = File(default=[]),
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     if not _guard(user):
         return RedirectResponse("/", 303)
@@ -188,6 +190,7 @@ async def reply(
     files: list[UploadFile] = File(default=[]),
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     if not _guard(user):
         return RedirectResponse("/", 303)
@@ -228,6 +231,7 @@ def change_status(
     status: str = Form(...),
     user: User = Depends(require_user),
     session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
 ):
     if not _guard(user):
         return RedirectResponse("/", 303)

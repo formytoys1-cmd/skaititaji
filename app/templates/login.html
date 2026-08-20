@@ -7,6 +7,7 @@
     <p class="text-slate-500 text-sm mt-1">{{ t('login.subtitle') }}</p>
 
     <form method="post" action="/login" class="mt-6 space-y-4" onsubmit="lockSubmit(this)">
+{% include "_csrf.html" %}
       <div>
         <label for="email" class="block text-sm font-medium mb-1">{{ t('login.email') }}</label>
         <input id="email" name="email" type="email" required autofocus autocomplete="email"

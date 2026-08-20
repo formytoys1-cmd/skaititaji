@@ -66,6 +66,7 @@
               <code>{{ t.code }}</code> · {{ t.category.value }} · {{ t.unit }} · {{ t.decimals }} zīmes · anomālija > {{ t.max_plausible_consumption }}</div>
           </div>
           <form method="post" action="/admin/meter-types/{{ t.id }}/toggle">
+{% include "_csrf.html" %}
             <button class="text-xs px-3 py-1.5 rounded-lg {% if t.is_active %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-500{% endif %}">
               {{ 'Aktīvs' if t.is_active else 'Neaktīvs' }}
             </button>
@@ -80,6 +81,7 @@
       <div class="font-semibold mb-1">Pievienot skaitītāja tipu</div>
       <p class="text-xs text-slate-600 mb-4">Jauns tips bez koda izmaiņām — demonstrē paplašināmību.</p>
       <form method="post" action="/admin/meter-types" class="space-y-3 text-sm">
+{% include "_csrf.html" %}
         <input name="code" required placeholder="code (piem. heat_flat)" class="w-full px-3 py-2 rounded-lg border border-slate-300">
         <input name="name_lv" required placeholder="Nosaukums LV" class="w-full px-3 py-2 rounded-lg border border-slate-300">
         <input name="name_ru" required placeholder="Название RU" class="w-full px-3 py-2 rounded-lg border border-slate-300">

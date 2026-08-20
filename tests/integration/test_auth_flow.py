@@ -5,6 +5,7 @@
 import pytest
 
 from app.models import UserRole
+from tests.conftest import csrf_token
 
 pytestmark = pytest.mark.integration
 
@@ -13,14 +14,14 @@ def test_login_success_redirects_to_role_home(client, session, factory):
     org = factory.organization()
     factory.user(organization=org, email="mgr@test.local",
                  password="pw-123456", role=UserRole.MANAGER)
-    r = client.post("/login", data={"email": "mgr@test.local", "password": "pw-123456"},
+    r = client.post("/login", data={"email": "mgr@test.local", "password": "pw-123456", "csrf_token": csrf_token(client)},
                     follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/parvalde"
 
 
 def test_login_failure_redirects_back(client, factory):
-    r = client.post("/login", data={"email": "nobody@test.local", "password": "x"},
+    r = client.post("/login", data={"email": "nobody@test.local", "password": "x", "csrf_token": csrf_token(client)},
                     follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/login"
@@ -37,7 +38,7 @@ def test_login_then_access_then_logout(client, session, factory):
     factory.user(organization=org, email="res@test.local",
                  password="pw-abcdef", role=UserRole.RESIDENT)
     # вход
-    client.post("/login", data={"email": "res@test.local", "password": "pw-abcdef"})
+    client.post("/login", data={"email": "res@test.local", "password": "pw-abcdef", "csrf_token": csrf_token(client)})
     # доступ к своему кабинету
     r = client.get("/dzivoklis")
     assert r.status_code == 200
@@ -52,6 +53,6 @@ def test_role_guard_blocks_wrong_role(client, session, factory):
     org = factory.organization()
     factory.user(organization=org, email="res2@test.local",
                  password="pw-abcdef", role=UserRole.RESIDENT)
-    client.post("/login", data={"email": "res2@test.local", "password": "pw-abcdef"})
+    client.post("/login", data={"email": "res2@test.local", "password": "pw-abcdef", "csrf_token": csrf_token(client)})
     r = client.get("/admin", follow_redirects=False)
     assert r.status_code in (403, 303)

@@ -14,6 +14,7 @@ from __future__ import annotations
 import pytest
 
 from app.models import UserRole
+from tests.conftest import csrf_token
 from tests.factories import Factory
 
 pytestmark = pytest.mark.security
@@ -25,7 +26,7 @@ def _login(client, email: str) -> None:
     """Логинит пользователя через боевой POST /login (сессионная cookie)."""
     r = client.post(
         "/login",
-        data={"email": email, "password": _PASSWORD},
+        data={"email": email, "password": _PASSWORD, "csrf_token": csrf_token(client)},
         follow_redirects=False,
     )
     assert r.status_code in (302, 303), r.text
@@ -99,7 +100,8 @@ def test_manager_cannot_create_unit_in_foreign_building(client, session, two_ten
     ).one()
     r = client.post(
         f"/parvalde/objekti/{b['building'].id}/units",
-        data={"number": "666", "account_number": "HACK"},
+        data={"number": "666", "account_number": "HACK",
+              "csrf_token": csrf_token(client)},
         follow_redirects=False,
     )
     assert r.status_code in (303, 404)
@@ -127,6 +129,7 @@ def test_manager_cannot_create_meter_in_foreign_unit(client, session, two_tenant
             "meter_type_id": b["meter_type"].id,
             "serial_number": "HACK-SN",
             "initial_value": "0",
+            "csrf_token": csrf_token(client),
         },
         follow_redirects=False,
     )
@@ -155,7 +158,8 @@ def test_resident_cannot_submit_reading_for_foreign_meter(client, session, two_t
     ).one()
     r = client.post(
         "/dzivoklis/submit",
-        data={f"value_{period_meter.id}": "999"},
+        data={f"value_{period_meter.id}": "999",
+              "csrf_token": csrf_token(client)},
         follow_redirects=False,
     )
     assert r.status_code in (302, 303)

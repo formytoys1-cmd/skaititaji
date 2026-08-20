@@ -15,6 +15,7 @@
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
       <div class="font-semibold mb-3">Pievienot skaitītāju</div>
       <form method="post" action="/parvalde/dzivoklis/{{ unit.id }}/meters" class="space-y-3 text-sm" onsubmit="lockSubmit(this)">
+{% include "_csrf.html" %}
         <div>
           <label for="meter_type_id" class="block font-medium mb-1">Tips *</label>
           <select id="meter_type_id" name="meter_type_id" required class="w-full px-3 py-2 rounded-lg border border-slate-300">
