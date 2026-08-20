@@ -10,6 +10,24 @@
 - Помощь/мануалы: https://skaititaji.onrender.com/palidziba
 - Репозиторий: https://github.com/formytoys1-cmd/skaititaji
 
+## QR‑коды (сканируй с телефона)
+QR «живые» — их отдаёт само приложение, поэтому они всегда указывают на актуальный
+адрес. Открыть страницу со всеми QR и инструкцией установки: **/koplietosana**.
+
+**Перейти на сайт с телефона — наведи камеру на QR:**
+
+![QR — сайт](https://skaititaji.onrender.com/qr/site.svg)
+
+| Что | Ссылка на QR (SVG, для печати/вставки) | Цель |
+|---|---|---|
+| Сайт | https://skaititaji.onrender.com/qr/site.svg | `/` |
+| Приложение (установка) | https://skaititaji.onrender.com/qr/app.svg | `/koplietosana#instalet` |
+| Помощь | https://skaititaji.onrender.com/qr/help.svg | `/palidziba` |
+
+> Работоспособность QR и всей этой справки проверяет автоматический монитор
+> `tools/reference_check.py` (воркфлоу `reference-monitor`, каждые 30 мин): если
+> что‑то сломалось — заводит GitHub issue и падает красным.
+
 ## Демо‑логины (пароль у всех `demo1234`)
 | Роль | E‑mail | Куда ведёт | Что показывает |
 |---|---|---|---|
