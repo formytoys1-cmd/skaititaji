@@ -72,11 +72,18 @@ jobs:
 
       - name: Install app deps
         if: steps.guard.outputs.run == 'true'
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       - name: Gate - import
         if: steps.guard.outputs.run == 'true'
         run: python -c "import app.main; print('import ok')"
+
+      - name: Gate - pytest + coverage (key modules >= 80%)
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          python -m pytest tests/unit tests/integration tests/security \
+            --cov=app.auth --cov=app.config --cov=app.services \
+            --cov-fail-under=80
 
       - name: Start app
         if: steps.guard.outputs.run == 'true'

@@ -16,7 +16,6 @@ from app.database import get_session
 from app.i18n import normalize_lang
 from app.models import (
     Building,
-    Organization,
     Unit,
     UnitResident,
     User,

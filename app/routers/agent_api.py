@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlmodel import Session
 
 from app.config import settings
+from app.database import get_session
 from app.feedback_service import (
     add_message,
     attachment_path,
@@ -24,7 +25,6 @@ from app.feedback_service import (
     messages_for,
     set_status,
 )
-from app.database import get_session
 from app.models import (
     FeedbackAttachment,
     FeedbackAuthor,

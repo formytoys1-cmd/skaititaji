@@ -1,0 +1,51 @@
+[tool.pytest.ini_options]
+# Каркас тестирования аудита качества (см. docs/AUDIT_MANDATE_QA_AGENT.md, Часть 3).
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q --strict-markers"
+markers = [
+    "smoke: базовые проверки доступности приложения",
+    "security: тесты находок безопасности (SEC-*)",
+    "unit: юнит-тесты чистой логики",
+    "integration: тесты роутеров через TestClient",
+    "contracts: контрактные тесты внешних API (Visma)",
+    "e2e: сквозные сценарии (Playwright)",
+    "slow: медленные тесты (Postgres/сеть)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+# Покрытие меряем по ключевым логическим модулям (Часть 3.4: «ключевые модули»).
+# Роутеры/шаблоны покрываются интеграционными/e2e-тестами по мере закрытия находок.
+source = ["app.auth", "app.config", "app.services"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["mobile", "docs", ".venv", "data"]
+
+[tool.ruff.lint]
+# Стартовый набор гейта: pyflakes(F) — неиспользуемые импорты/имена, реальные
+# баги; сортировка импортов(I). Стилевые правила (UP/E/B) подключаются позже,
+# чтобы не тянуть массовую косметическую правку легаси в одном коммите.
+select = ["F", "I"]
+ignore = [
+    "E501",   # длину строк не гейтим жёстко (есть длинные i18n-строки)
+    "B008",   # FastAPI Depends() в аргументах — идиома фреймворка
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+"tests/**/test_services.py" = ["F841"]

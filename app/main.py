@@ -14,7 +14,18 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.database import get_session, init_db
 from app.models import MeterType, Organization
-from app.routers import admin, agent_api, auth, manager, management, moderator, public, pwa, resident, share
+from app.routers import (
+    admin,
+    agent_api,
+    auth,
+    management,
+    manager,
+    moderator,
+    public,
+    pwa,
+    resident,
+    share,
+)
 from app.seed import ensure_demo_extras, seed_demo
 
 

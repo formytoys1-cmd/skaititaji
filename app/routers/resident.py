@@ -1,7 +1,7 @@
 """Кабинет жителя: просмотр квартир, счётчиков и подача показаний."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session
 
@@ -12,7 +12,6 @@ from app.services import (
     ReadingValidationError,
     average_consumption,
     current_period,
-    estimate_reading,
     is_window_open,
     last_reading,
     meters_for_unit,
@@ -82,7 +81,6 @@ async def submit(
     session: Session = Depends(get_session),
 ):
     """Приём формы подачи показаний. Поля: value_<meter_id>=..."""
-    org = _resident_org(session, user)
     period = current_period()
     form = await request.form()
 

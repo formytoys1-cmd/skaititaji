@@ -13,7 +13,6 @@ from app.models import (
     MeterCategory,
     MeterType,
     Organization,
-    Unit,
     User,
     UserRole,
 )

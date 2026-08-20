@@ -79,7 +79,6 @@ def dashboard(
     }
 
     # Детализация по счётчикам (для таблицы)
-    meter_by_id = {m.id: m for m in meters}
     unit_by_id = {u.id: u for u in units}
     reading_by_meter = {r.meter_id: r for r in period_readings}
     rows = []

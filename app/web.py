@@ -20,7 +20,6 @@ def _announcement(org: Optional[Organization], lang: str) -> Optional[str]:
     if not org:
         return None
     try:
-        from datetime import date
 
         from app.services import is_window_open
         if is_window_open(org):

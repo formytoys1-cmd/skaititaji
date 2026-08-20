@@ -22,6 +22,7 @@ from app.feedback_service import (
     save_attachment,
     set_status,
 )
+from app.i18n import t as i18n_t
 from app.models import (
     FeedbackAttachment,
     FeedbackAuthor,
@@ -32,7 +33,6 @@ from app.models import (
     UserRole,
 )
 from app.web import current_lang, flash, render
-from app.i18n import t as i18n_t
 
 router = APIRouter()
 
