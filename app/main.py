@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.config import settings
+from app.config import settings, validate_production_config
 from app.database import get_session, init_db
 from app.models import MeterType, Organization
 from app.routers import (
@@ -54,6 +54,8 @@ async def _self_ping_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # SEC-004: в проде запрещаем небезопасную конфигурацию до старта сервиса.
+    validate_production_config(settings)
     init_db()
     seed_demo()  # идемпотентно: создаёт демо-данные, если их ещё нет
     ensure_demo_extras()  # точечные доводчики к уже существующей БД

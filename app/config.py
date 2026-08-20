@@ -113,6 +113,20 @@ def validate_production_config(cfg: "Settings | None" = None) -> None:
             "SECRET_KEY не задан или равен небезопасному дефолту — "
             "задайте уникальный секрет в переменной окружения SECRET_KEY."
         )
+    if cfg.debug:
+        problems.append(
+            "DEBUG включён в проде — отключите его (DEBUG=0)."
+        )
+    if cfg.database_url.strip().lower().startswith("sqlite"):
+        problems.append(
+            "DATABASE_URL указывает на sqlite — используйте полноценную СУБД "
+            "(например, PostgreSQL) в проде."
+        )
+    if cfg.allow_demo_login:
+        problems.append(
+            "ALLOW_DEMO_LOGIN включён в проде — гостевой вход обходит "
+            "аутентификацию, выключите его (ALLOW_DEMO_LOGIN=0)."
+        )
 
     if problems:
         raise RuntimeError(
