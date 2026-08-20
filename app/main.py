@@ -18,6 +18,7 @@ from app.routers import (
     admin,
     agent_api,
     auth,
+    gdpr,
     management,
     manager,
     moderator,
@@ -138,6 +139,7 @@ app.include_router(moderator.router)
 app.include_router(agent_api.router)
 app.include_router(pwa.router)
 app.include_router(share.router)
+app.include_router(gdpr.router)
 
 
 # Кастомная 404-страница (брендированная, 3 языка).
