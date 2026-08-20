@@ -43,7 +43,7 @@ jobs:
           echo "Ветка-кандидат: $BRANCH"
 
       - name: Checkout branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.vars.outputs.branch }}
           fetch-depth: 0
