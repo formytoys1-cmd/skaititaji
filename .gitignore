@@ -20,3 +20,10 @@ data/
 tools/audit/node_modules/
 tools/audit/a11y-report.json
 tools/audit/.lighthouseci/
+
+# Тестовое покрытие
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.ruff_cache/
