@@ -11,6 +11,7 @@ API отключён (503), чтобы случайно не открыть до
 from __future__ import annotations
 
 import base64
+import hmac
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlmodel import Session
@@ -39,7 +40,8 @@ def require_agent(x_agent_key: str = Header(default="")) -> None:
     """Проверяет ключ агента. Отключает API, если ключ не сконфигурирован."""
     if not settings.agent_api_key:
         raise HTTPException(status_code=503, detail="Agent API disabled")
-    if x_agent_key != settings.agent_api_key:
+    # SEC-007: постоянное по времени сравнение против timing-атак на подбор ключа.
+    if not hmac.compare_digest(x_agent_key, settings.agent_api_key):
         raise HTTPException(status_code=401, detail="Invalid agent key")
 
 
