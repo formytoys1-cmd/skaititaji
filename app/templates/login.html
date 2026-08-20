@@ -64,6 +64,18 @@ function fillLogin(email) {
   document.getElementById('password').value = 'demo1234';
   document.getElementById('password').focus();
 }
+// Демо-доступ по ссылке /login?demo=<role>: заполняем поля реального входа
+// (без обхода аутентификации — вход идёт штатно, с rate-limit и хешем пароля).
+(function () {
+  var DEMO = { resident: 'resident@demo.lv', manager: 'manager@demo.lv', admin: 'admin@demo.lv' };
+  var role = new URLSearchParams(window.location.search).get('demo');
+  if (role && DEMO[role]) {
+    document.getElementById('email').value = DEMO[role];
+    document.getElementById('password').value = 'demo1234';
+    var btn = document.querySelector('form[action="/login"] button[type="submit"]');
+    if (btn) { btn.focus(); btn.classList.add('ring-2', 'ring-offset-2', 'ring-brand'); }
+  }
+})();
 var PW_SHOW = {{ t('login.show')|tojson }}, PW_HIDE = {{ t('login.hide')|tojson }};
 function togglePw() {
   var p = document.getElementById('password'), b = document.getElementById('pwToggle');
