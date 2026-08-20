@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 import os
+import secrets
 from functools import lru_cache
+
+#: Небезопасный дефолт из старых версий. Остаётся только как маркер
+#: «SECRET_KEY не задан» для boot-guard (SEC-002/SEC-004).
+DEFAULT_SECRET_KEY = "dev-secret-change-me"
 
 
 class Settings:
@@ -14,17 +19,24 @@ class Settings:
         self.app_tagline: str = os.getenv(
             "APP_TAGLINE", "Ērta skaitītāju rādījumu nodošana"
         )
-        self.secret_key: str = os.getenv("SECRET_KEY", "dev-secret-change-me")
         self.database_url: str = os.getenv(
             "DATABASE_URL", "sqlite:///./data/skaititaji.db"
         )
         self.default_locale: str = os.getenv("DEFAULT_LOCALE", "lv")
-        self.debug: bool = os.getenv("DEBUG", "1") == "1"
+        # SEC-002: DEBUG по умолчанию ВЫКЛЮЧЕН. Разработчик включает его явно.
+        self.debug: bool = os.getenv("DEBUG", "0") == "1"
 
         # Признак боевого окружения. Определяется явными сигналами платформы
         # (Render) или переменной ENVIRONMENT, но НЕ выводится из DEBUG, чтобы
         # локальное демо работало предсказуемо.
         self.is_production: bool = self._detect_production()
+
+        # SEC-002: секрет сессий. В dev при отсутствии ключа генерируем
+        # случайный (сессии живут в пределах процесса — это безопасно и удобно).
+        # В проде при отсутствии ключа оставляем маркер по умолчанию, чтобы
+        # boot-guard (SEC-004) упал с понятным сообщением, а не работал на
+        # предсказуемом секрете.
+        self.secret_key, self.secret_key_is_default = self._resolve_secret_key()
 
         # Гостевой вход в один клик (demo-login) — только для разработки/демо.
         # В проде по умолчанию выключен (см. SEC-001/SEC-004).
@@ -58,6 +70,21 @@ class Settings:
             return False
         return bool(os.getenv("RENDER_EXTERNAL_URL") or os.getenv("SELF_PING_URL"))
 
+    def _resolve_secret_key(self) -> tuple[str, bool]:
+        """Возвращает (secret_key, is_default).
+
+        - Задан непустой SECRET_KEY → используем его (is_default только если он
+          буквально равен старому небезопасному дефолту).
+        - Не задан и dev → генерируем случайный эфемерный ключ.
+        - Не задан и прод → маркер по умолчанию (boot-guard упадёт).
+        """
+        env_secret = os.getenv("SECRET_KEY", "").strip()
+        if env_secret:
+            return env_secret, env_secret == DEFAULT_SECRET_KEY
+        if not self.is_production:
+            return secrets.token_urlsafe(48), False
+        return DEFAULT_SECRET_KEY, True
+
     @property
     def demo_login_enabled(self) -> bool:
         """Доступен ли эндпоинт /demo-login: только в dev и вне прода."""
@@ -67,6 +94,31 @@ class Settings:
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def validate_production_config(cfg: "Settings | None" = None) -> None:
+    """Boot-guard: в проде запрещает небезопасную конфигурацию (SEC-004).
+
+    Ничего не делает вне прода. В проде собирает все проблемы и падает с
+    единым понятным сообщением (RuntimeError), чтобы приложение не стартовало
+    на небезопасных настройках.
+    """
+    cfg = cfg or settings
+    if not cfg.is_production:
+        return
+
+    problems: list[str] = []
+    if cfg.secret_key_is_default:
+        problems.append(
+            "SECRET_KEY не задан или равен небезопасному дефолту — "
+            "задайте уникальный секрет в переменной окружения SECRET_KEY."
+        )
+
+    if problems:
+        raise RuntimeError(
+            "Небезопасная конфигурация для продакшена:\n- "
+            + "\n- ".join(problems)
+        )
 
 
 settings = get_settings()

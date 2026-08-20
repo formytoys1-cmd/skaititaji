@@ -110,7 +110,9 @@ async def security_headers(request, call_next):
 
 
 # Сессионная cookie: HttpOnly (по умолчанию), Secure в проде, SameSite=Lax.
-_is_prod = bool(os.getenv("RENDER_EXTERNAL_URL") or os.getenv("SELF_PING_URL")) or not settings.debug
+# Прод определяется явными сигналами (settings.is_production), а не DEBUG —
+# иначе локальное демо (DEBUG по умолчанию 0, SEC-002) требовало бы HTTPS.
+_is_prod = settings.is_production
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.secret_key,
