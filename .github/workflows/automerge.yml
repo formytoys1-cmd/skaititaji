@@ -1,13 +1,18 @@
 # Авто-мердж ветки форк-агента в main с обязательными гейтами.
 #
-# Кто может запустить:
-#  - вручную (workflow_dispatch) — я из main-чата или пользователь через UI;
-#  - repository_dispatch (event_type: automerge) — форк-агент или мост из консоли.
+# Запускается:
+#  - ПО РАСПИСАНИЮ (каждые 6 часов) — автономно, без чьего-либо запроса;
+#  - вручную (workflow_dispatch) — main-чат или пользователь через UI;
+#  - repository_dispatch (event_type: automerge) — форк-агент/мост из консоли;
+#  - через workflow_dispatch API (мост console-control по команде [merge]).
 #
-# Перед мерджем гоняются гейты (импорт приложения + a11y WCAG 2.2 AA + PWA smoke).
+# Guard: если ветка НЕ опережает main — гейты и мердж пропускаются (не грузим CI).
+# Перед мерджем гоняются гейты (импорт + a11y WCAG 2.2 AA + PWA smoke).
 # Мердж выполняется ТОЛЬКО если все гейты зелёные — безопасно для продакшна.
 name: automerge
 on:
+  schedule:
+    - cron: "0 */6 * * *"
   workflow_dispatch:
     inputs:
       branch:
@@ -35,7 +40,7 @@ jobs:
           if [ -z "$BRANCH" ]; then BRANCH="${{ github.event.client_payload.branch }}"; fi
           if [ -z "$BRANCH" ]; then BRANCH="agent/console"; fi
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-          echo "Мердж ветки: $BRANCH"
+          echo "Ветка-кандидат: $BRANCH"
 
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -43,39 +48,62 @@ jobs:
           ref: ${{ steps.vars.outputs.branch }}
           fetch-depth: 0
 
+      - name: Guard - ahead of main?
+        id: guard
+        env:
+          BRANCH: ${{ steps.vars.outputs.branch }}
+        run: |
+          git fetch origin main --quiet
+          AHEAD=$(git rev-list --count "origin/main..origin/$BRANCH" || echo 0)
+          echo "commits ahead: $AHEAD"
+          if [ "$AHEAD" = "0" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Нечего мерджить - пропускаю гейты и мердж."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.guard.outputs.run == 'true'
         with: { python-version: "3.12" }
       - uses: actions/setup-node@v4
+        if: steps.guard.outputs.run == 'true'
         with: { node-version: "20" }
 
       - name: Install app deps
+        if: steps.guard.outputs.run == 'true'
         run: pip install -r requirements.txt
 
-      - name: Gate — import
+      - name: Gate - import
+        if: steps.guard.outputs.run == 'true'
         run: python -c "import app.main; print('import ok')"
 
       - name: Start app
+        if: steps.guard.outputs.run == 'true'
         run: |
           nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/health && break || sleep 1; done
 
       - name: Install audit deps
+        if: steps.guard.outputs.run == 'true'
         working-directory: tools/audit
         run: |
           npm install playwright@1.48.0
           npx playwright install --with-deps chromium
 
-      - name: Gate — a11y (WCAG 2.2 AA)
+      - name: Gate - a11y (WCAG 2.2 AA)
+        if: steps.guard.outputs.run == 'true'
         working-directory: tools/audit
         env: { BASE_URL: http://127.0.0.1:8000 }
         run: node a11y.mjs
 
-      - name: Gate — PWA smoke
+      - name: Gate - PWA smoke
+        if: steps.guard.outputs.run == 'true'
         env: { BASE_URL: http://127.0.0.1:8000 }
         run: python tools/audit/pwa_check.py http://127.0.0.1:8000
 
       - name: Merge branch into main
-        if: success()
+        if: steps.guard.outputs.run == 'true' && success()
         env:
           BRANCH: ${{ steps.vars.outputs.branch }}
         run: |
@@ -83,6 +111,6 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git fetch origin main
           git checkout main
-          git merge --no-ff "origin/$BRANCH" -m "merge: $BRANCH → main (automerge CI)"
+          git merge --no-ff "origin/$BRANCH" -m "merge: $BRANCH -> main (automerge CI)"
           git push origin main
-          echo "✅ Merged $BRANCH → main"
+          echo "Merged $BRANCH -> main"
