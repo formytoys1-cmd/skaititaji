@@ -58,6 +58,16 @@ tests/
 `smoke`, `unit`, `integration`, `security`, `contracts`, `e2e`, `slow`.
 Пример: `pytest -m security`.
 
+## Инфраструктура данных (DATA-001/002)
+
+- `tests/infra/test_migrations.py` (`slow`) — миграции Alembic применяются на
+  чистой БД (`alembic upgrade head`). В CI отдельный джоб `migrations` гоняет их
+  на Postgres-сервисе; локально — на временной SQLite.
+- `tests/unit/test_reading_integrity.py` — идемпотентность и защита от гонок при
+  подаче показаний: повтор за один период не плодит строк, показание не убывает,
+  параллельная подача за `(meter_id, period)` оставляет ровно одну строку
+  (БД-констрейнт `uq_reading_meter_period` + транзакционный `upsert_reading`).
+
 ## Покрытие
 
 Гейт CI — **≥ 80 % по ключевым логическим модулям** (`app.auth`, `app.config`,

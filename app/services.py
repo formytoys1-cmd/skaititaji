@@ -112,10 +112,17 @@ def upsert_reading(
     period: str,
     **kwargs,
 ) -> Reading:
-    """Создаёт или обновляет показание за период (повторная подача заменяет)."""
-    existing = reading_for_period(session, meter.id, period)
-    new = validate_and_build(session, meter, value, period, **kwargs)
-    if existing:
+    """Создаёт или обновляет показание за период (идемпотентно, без гонок).
+
+    DATA-002:
+    - уникальность (meter_id, period) гарантируется БД-констрейнтом;
+    - при гонке (две параллельные вставки) одна из них получит IntegrityError —
+      мы откатываемся и повторяем как обновление уже существующей строки;
+    - правило «новое показание ≥ предыдущего» проверяется в validate_and_build.
+    """
+    from sqlalchemy.exc import IntegrityError, OperationalError
+
+    def _apply(existing: Reading, new: Reading) -> None:
         existing.value = new.value
         existing.consumption = new.consumption
         existing.reading_date = new.reading_date
@@ -124,12 +131,37 @@ def upsert_reading(
         existing.is_anomaly = new.is_anomaly
         existing.submitted_by_id = new.submitted_by_id
         existing.note = new.note
+
+    existing = reading_for_period(session, meter.id, period)
+    new = validate_and_build(session, meter, value, period, **kwargs)
+    if existing:
+        _apply(existing, new)
         session.add(existing)
         session.commit()
         session.refresh(existing)
         return existing
+
     session.add(new)
-    session.commit()
+    try:
+        session.commit()
+    except (IntegrityError, OperationalError):
+        # Гонка: параллельная транзакция уже вставила/заблокировала строку за
+        # этот период. Откатываемся и применяем как обновление существующей.
+        session.rollback()
+        existing = reading_for_period(session, meter.id, period)
+        if existing is None:
+            # Строки нет (напр. таймаут блокировки без вставки) — повторяем вставку.
+            retry = validate_and_build(session, meter, value, period, **kwargs)
+            session.add(retry)
+            session.commit()
+            session.refresh(retry)
+            return retry
+        rebuilt = validate_and_build(session, meter, value, period, **kwargs)
+        _apply(existing, rebuilt)
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return existing
     session.refresh(new)
     return new
 

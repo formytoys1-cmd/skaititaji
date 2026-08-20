@@ -235,6 +235,10 @@ class Meter(SQLModel, table=True):
 
 class Reading(SQLModel, table=True):
     __tablename__ = "reading"
+    # DATA-002: одно показание на (счётчик, период) — защита от дублей/гонок.
+    __table_args__ = (
+        UniqueConstraint("meter_id", "period", name="uq_reading_meter_period"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     meter_id: int = Field(foreign_key="meter.id", index=True)
