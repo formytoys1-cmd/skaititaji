@@ -95,12 +95,22 @@ Cron-скелет постоянный, но это фиксированные �
 **Как включить настоящий 24/7 «живой» агент (облако, без локальной сессии):**
 GitHub **Copilot coding agent** — назначаешь issue на бота `copilot-swe-agent`,
 он автономно делает PR в облаке. Проверено `2026-08-20`: на репозитории он
-**пока НЕ включён** (в `suggestedActors` только владелец, бота нет). Чтобы
-включить: в настройках GitHub/Copilot активировать Copilot coding agent для
-аккаунта/репо. После этого — небольшая правка `tools/inbox_to_issues.py`
-(авто-назначение новой issue на `copilot-swe-agent`), и обработка станет
-полностью автономной 24/7. Это уже подготовлено на уровне пайплайна
-(issue создаётся автоматически), не хватает только включённой фичи.
+**пока НЕ включён** (в `suggestedActors` только владелец, бота нет).
+
+Пошагово (делается один раз, на стороне GitHub — см. `docs/COPILOT_CODING_AGENT_SETUP.md`):
+1. Нужен любой **платный план Copilot** (Pro / Pro+ / Max / Business). Проверить:
+   github.com/settings/copilot.
+2. Включить агента для своих репо: **профиль → Copilot → Settings** → раздел
+   «Copilot coding agent» → включить для репозиториев (для платных планов он
+   включён по умолчанию — убедиться, что не выключен).
+3. Готово. Проверка: `curl -s -H "Authorization: Bearer $GH" -X POST \
+   https://api.github.com/graphql -d '{"query":"query{repository(owner:\"formytoys1-cmd\",name:\"skaititaji\"){suggestedActors(capabilities:[CAN_BE_ASSIGNED],first:20){nodes{login}}}}"}'`
+   — в списке должен появиться `copilot-swe-agent`.
+
+**Код уже готов:** `tools/inbox_to_issues.py` сам назначает новые issue из
+консоли на Copilot coding agent, КАК ТОЛЬКО бот станет доступен (безопасная
+проверка: пока фича выключена — просто пропускает). Дорабатывать ничего не надо —
+включи фичу, и обработка станет полностью автономной 24/7.
 
 ## Контроль деплоя
 - Хостинг: Render (autoDeploy с `main`). Прод не падает при неудачном деплое —

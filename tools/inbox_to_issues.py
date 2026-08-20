@@ -33,6 +33,17 @@ LABEL = "inbox"
 CLOSED = {"done", "rejected"}
 MARKER_RE = re.compile(r"inbox-thread-(\d+)-msg-(\d+)")
 
+# Авто-назначение созданных Issue на облачный GitHub Copilot coding agent.
+# Включается автоматически, КОГДА агент доступен на репо (фича включена в
+# настройках Copilot). Если бот недоступен — тихо пропускаем, воркфлоу работает
+# как обычно. Отключить принудительно: ASSIGN_COPILOT=0.
+REPO = os.getenv("GITHUB_REPOSITORY", "formytoys1-cmd/skaititaji")
+ASSIGN_COPILOT = os.getenv("ASSIGN_COPILOT", "1") == "1"
+# Возможные логины бота coding agent в suggestedActors.
+_COPILOT_LOGINS = {"copilot-swe-agent", "Copilot", "copilot"}
+_copilot_actor_id: str | None = None
+_copilot_checked = False
+
 
 def _headers() -> dict:
     return {"X-Agent-Key": API_KEY}
@@ -57,6 +68,88 @@ def fetch_awaiting() -> list[dict]:
 
 def gh(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(["gh", *args], capture_output=True, text=True, check=check)
+
+
+def _graphql(query: str) -> dict | None:
+    res = subprocess.run(
+        ["gh", "api", "graphql", "-f", f"query={query}"],
+        capture_output=True, text=True,
+    )
+    if res.returncode != 0:
+        return None
+    try:
+        return json.loads(res.stdout or "{}")
+    except json.JSONDecodeError:
+        return None
+
+
+def copilot_actor_id() -> str | None:
+    """ID бота Copilot coding agent, если он назначаемый на этом репо (иначе None).
+
+    Кэшируется на процесс. Это же и проверка «включена ли фича»: пока агент не
+    активирован в настройках Copilot, бот не появляется в suggestedActors.
+    """
+    global _copilot_actor_id, _copilot_checked
+    if _copilot_checked:
+        return _copilot_actor_id
+    _copilot_checked = True
+    try:
+        owner, name = REPO.split("/", 1)
+    except ValueError:
+        return None
+    q = (
+        f'query {{ repository(owner:"{owner}", name:"{name}") {{ '
+        f'suggestedActors(capabilities:[CAN_BE_ASSIGNED], first:50) {{ '
+        f'nodes {{ login __typename ... on Bot {{ id }} }} }} }} }}'
+    )
+    data = _graphql(q)
+    if not data:
+        return None
+    nodes = (
+        data.get("data", {}).get("repository", {})
+        .get("suggestedActors", {}).get("nodes", []) or []
+    )
+    for n in nodes:
+        if n.get("login") in _COPILOT_LOGINS and n.get("id"):
+            _copilot_actor_id = n["id"]
+            break
+    return _copilot_actor_id
+
+
+def _issue_node_id(number: int) -> str | None:
+    owner, name = REPO.split("/", 1)
+    q = (
+        f'query {{ repository(owner:"{owner}", name:"{name}") {{ '
+        f'issue(number:{number}) {{ id }} }} }}'
+    )
+    data = _graphql(q)
+    if not data:
+        return None
+    return data.get("data", {}).get("repository", {}).get("issue", {}).get("id")
+
+
+def assign_to_copilot(issue_url: str) -> bool:
+    """Назначает Issue на Copilot coding agent. Возвращает True при успехе.
+
+    Безопасно: если агент недоступен или что-то пошло не так — возвращает False,
+    не роняя основной поток создания Issue.
+    """
+    actor_id = copilot_actor_id()
+    if not actor_id:
+        return False
+    m = re.search(r"/issues/(\d+)", issue_url or "")
+    if not m:
+        return False
+    node_id = _issue_node_id(int(m.group(1)))
+    if not node_id:
+        return False
+    mutation = (
+        f'mutation {{ replaceActorsForAssignable(input:{{'
+        f'assignableId:"{node_id}", actorIds:["{actor_id}"]}}) {{ '
+        f'assignable {{ ... on Issue {{ number }} }} }} }}'
+    )
+    data = _graphql(mutation)
+    return bool(data and "errors" not in data)
 
 
 def ensure_label() -> None:
@@ -121,7 +214,14 @@ def create_issue(detail: dict) -> str | None:
     if res.returncode != 0:
         print(f"[error] gh issue create: {res.stderr.strip()}", file=sys.stderr)
         return None
-    print(f"[ok] Issue создан: {res.stdout.strip()}  ({marker})")
+    issue_url = res.stdout.strip()
+    print(f"[ok] Issue создан: {issue_url}  ({marker})")
+    if ASSIGN_COPILOT:
+        if assign_to_copilot(issue_url):
+            print(f"[ok] назначен на Copilot coding agent: {issue_url}")
+        else:
+            print("[info] Copilot coding agent недоступен — Issue без авто-назначения "
+                  "(включите фичу в настройках Copilot, тогда назначится само).")
     return marker
 
 
