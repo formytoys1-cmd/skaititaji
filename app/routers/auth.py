@@ -1,7 +1,7 @@
 """Вход и выход."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlmodel import Session, select
 
@@ -12,6 +12,7 @@ from app.auth import (
     login_user,
     logout_user,
 )
+from app.config import settings
 from app.database import get_session
 from app.i18n import normalize_lang
 from app.models import (
@@ -65,6 +66,11 @@ def demo_login(
     session: Session = Depends(get_session),
 ):
     """Гостевой вход в один клик под демо-аккаунтом выбранной роли."""
+    # SEC-001: обход аутентификации недопустим в проде. Эндпоинт существует
+    # только в dev/демо; при выключенном demo-login отвечаем 404 (как будто
+    # маршрута нет), чтобы не раскрывать его наличие.
+    if not settings.demo_login_enabled:
+        raise HTTPException(status_code=404)
     emails = {
         "resident": "resident@demo.lv",
         "manager": "manager@demo.lv",
