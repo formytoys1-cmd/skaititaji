@@ -28,6 +28,7 @@ const PAGES = [
   { url: '/privatums', name: 'privacy' },
   { url: '/pieejamiba', name: 'accessibility' },
   { url: '/atbilstiba', name: 'compliance' },
+  { url: '/koplietosana', name: 'share-qr' },
   { url: '/this-page-does-not-exist', name: '404' },
   { url: '/registreties', name: 'register' },
   { url: '/demo-login?role=resident', name: 'resident-dashboard' },
