@@ -37,7 +37,8 @@
             <td class="px-4 py-2">{{ row.org.kind }}</td>
             <td class="px-4 py-2">{{ row.buildings }}</td>
             <td class="px-4 py-2">{{ row.org.integration_provider }}
-              {% if row.mock %}<span class="text-xs text-amber-700">(mock)</span>{% endif %}</td>
+              {% if row.mock %}<span class="text-xs text-amber-700">(mock)</span>{% endif %}
+              {% if row.has_secret %}<span class="text-xs text-slate-500" title="Konfigurēts (paslēpts)">🔒 {{ row.secret_masked }}</span>{% endif %}</td>
             <td class="px-4 py-2">
               {% if row.integration_ok %}<span class="text-emerald-700">✓ Pieejama</span>
               {% else %}<span class="text-red-700">✗ Nav pieejama</span>{% endif %}

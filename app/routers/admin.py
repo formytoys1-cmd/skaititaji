@@ -8,6 +8,7 @@ from sqlmodel import Session, func, select
 from app.auth import require_user
 from app.csrf import csrf_protect
 from app.database import get_session
+from app.integrations.config import has_integration_secret
 from app.integrations.registry import get_integration
 from app.models import (
     Building,
@@ -17,6 +18,7 @@ from app.models import (
     User,
     UserRole,
 )
+from app.secrets_crypto import mask
 from app.web import flash, render
 
 router = APIRouter()
@@ -43,6 +45,10 @@ def dashboard(
             "buildings": n_buildings,
             "integration_ok": integration.health_check(),
             "mock": (o.integration_config or {}).get("mock", True),
+            # SEC-003: секрет никогда не отдаётся в шаблон открытым — только
+            # факт его наличия и маска ••••.
+            "has_secret": has_integration_secret(o, "password"),
+            "secret_masked": mask("x") if has_integration_secret(o, "password") else "",
         })
 
     meter_types = session.exec(

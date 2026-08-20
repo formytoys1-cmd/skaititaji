@@ -17,6 +17,7 @@ _PROD_ENV = {
     "DEBUG": "0",
     "DATABASE_URL": "postgresql://u:p@db/app",
     "ALLOW_DEMO_LOGIN": "0",
+    "SECRETS_ENCRYPTION_KEY": "a-strong-unique-secrets-encryption-key",
 }
 
 
@@ -25,7 +26,7 @@ def _settings(monkeypatch, **overrides):
 
     for key in ("SECRET_KEY", "DEBUG", "ENVIRONMENT", "ENV",
                 "RENDER_EXTERNAL_URL", "SELF_PING_URL", "ALLOW_DEMO_LOGIN",
-                "DATABASE_URL"):
+                "DATABASE_URL", "SECRETS_ENCRYPTION_KEY"):
         monkeypatch.delenv(key, raising=False)
     env = {**_PROD_ENV, **overrides}
     for key, value in env.items():
@@ -59,6 +60,12 @@ def test_production_config_validation(monkeypatch):
     # 5) demo-login включён в проде → падение.
     with pytest.raises(RuntimeError, match="ALLOW_DEMO_LOGIN"):
         validate_production_config(_settings(monkeypatch, ALLOW_DEMO_LOGIN="1"))
+
+    # 6) SEC-003: отсутствует ключ шифрования секретов интеграций → падение.
+    with pytest.raises(RuntimeError, match="SECRETS_ENCRYPTION_KEY"):
+        validate_production_config(
+            _settings(monkeypatch, SECRETS_ENCRYPTION_KEY=None)
+        )
 
 
 def test_validation_is_noop_outside_prod(monkeypatch):

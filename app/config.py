@@ -127,6 +127,13 @@ def validate_production_config(cfg: "Settings | None" = None) -> None:
             "ALLOW_DEMO_LOGIN включён в проде — гостевой вход обходит "
             "аутентификацию, выключите его (ALLOW_DEMO_LOGIN=0)."
         )
+    # SEC-003: без ключа шифрования секреты интеграций легли бы на эфемерный
+    # ключ (не переживает рестарт и не задан оператором) — в проде это ошибка.
+    if not os.getenv("SECRETS_ENCRYPTION_KEY", "").strip():
+        problems.append(
+            "SECRETS_ENCRYPTION_KEY не задан — секреты интеграций (пароль Visma) "
+            "не могут быть надёжно зашифрованы at-rest; задайте ключ в окружении."
+        )
 
     if problems:
         raise RuntimeError(
