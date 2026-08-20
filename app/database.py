@@ -40,10 +40,19 @@ engine = create_engine(
 
 
 def init_db() -> None:
+    """Готовит схему БД.
+
+    - Prod/Postgres: схемой управляют миграции Alembic (``alembic upgrade head``
+      применяется на деплое, см. docs/DEPLOY.md). ``create_all`` здесь НЕ
+      вызывается, чтобы не обходить версионирование схемы.
+    - Dev/тесты (sqlite): используем ``create_all`` для мгновенного старта демо
+      без миграций.
+    """
     # Импортируем модели, чтобы они зарегистрировались в metadata
     import app.models  # noqa: F401
 
-    SQLModel.metadata.create_all(engine)
+    if _is_sqlite:
+        SQLModel.metadata.create_all(engine)
 
 
 def get_session() -> Iterator[Session]:

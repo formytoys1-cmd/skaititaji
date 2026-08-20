@@ -47,3 +47,36 @@ jobs:
         with:
           name: coverage-xml
           path: coverage.xml
+
+  migrations:
+    name: Alembic migrations (Postgres)
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: skaititaji
+          POSTGRES_PASSWORD: skaititaji
+          POSTGRES_DB: skaititaji_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install dev deps
+        run: pip install -r requirements-dev.txt
+      - name: Apply migrations on clean Postgres
+        env:
+          DATABASE_URL: postgresql://skaititaji:skaititaji@127.0.0.1:5432/skaititaji_test
+        run: alembic upgrade head
+      - name: Run migration + infra tests
+        env:
+          DATABASE_URL: postgresql://skaititaji:skaititaji@127.0.0.1:5432/skaititaji_test
+        run: python -m pytest tests/infra -q
