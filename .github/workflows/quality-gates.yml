@@ -57,7 +57,7 @@ jobs:
           pip install pip-audit
           pip-audit -r requirements.txt --strict || echo "::warning::pip-audit нашёл уязвимости"
       - name: gitleaks (secret scanning)
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
