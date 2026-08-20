@@ -72,6 +72,9 @@ class VismaHorizonClient(AccountingIntegration):
         mock: Optional[bool] = None,
         endpoints: Optional[dict[str, str]] = None,
         timeout: float = 20.0,
+        transport: Optional[httpx.BaseTransport] = None,
+        max_retries: int = 3,
+        backoff_factor: float = 0.5,
     ) -> None:
         self.base_url = (base_url or settings.visma_base_url).rstrip("/")
         self.username = username or settings.visma_username
@@ -79,6 +82,10 @@ class VismaHorizonClient(AccountingIntegration):
         self.mock = settings.visma_mock if mock is None else mock
         self.endpoints = {**DEFAULT_ENDPOINTS, **(endpoints or {})}
         self.timeout = timeout
+        # Транспорт инъектируется в тестах (httpx.MockTransport), в проде — None.
+        self._transport = transport
+        self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
 
     # --------------------------------------------------------------------- #
     # HTTP helpers
@@ -89,7 +96,19 @@ class VismaHorizonClient(AccountingIntegration):
             auth=(self.username, self.password),
             timeout=self.timeout,
             headers={"Accept": "application/json", "Content-Type": "application/json"},
+            transport=self._transport,
         )
+
+    def _request(
+        self, client: httpx.Client, method: str, url: str, **kwargs: Any
+    ) -> httpx.Response:
+        """Выполняет HTTP-запрос и поднимает ошибку на 4xx/5xx.
+
+        (Ретраи/backoff добавляются в VISMA-002.)
+        """
+        r = client.request(method, url, **kwargs)
+        r.raise_for_status()
+        return r
 
     @staticmethod
     def _items(data: Any) -> list[dict]:
@@ -138,6 +157,48 @@ class VismaHorizonClient(AccountingIntegration):
                 )
             )
         return result
+
+    # --------------------------------------------------------------------- #
+    # Чтение показаний (SL query / инкрементальный sync)
+    # --------------------------------------------------------------------- #
+    @staticmethod
+    def _reading_row(it: dict) -> dict[str, Any]:
+        """Нормализует запись показания SL-сервиса в контрактную форму."""
+        return {
+            "external_reading_id": str(it.get("Pk") or ""),
+            "external_meter_id": str(it.get("SkaitPk") or ""),
+            "serial_number": str(it.get("SerNr") or "") or None,
+            "unit_external_id": str(it.get("ObjektaId") or "") or None,
+            "value": it.get("Radijums"),
+            "reading_date": it.get("RadDatums"),
+            "period": it.get("Periods"),
+            "extra": it,
+        }
+
+    def read_readings(
+        self, object_external_id: Optional[str] = None, limit: int = 500
+    ) -> list[dict[str, Any]]:
+        """Читает показания по договорам через SL `/query` (TdmPNSSkaLigRadSL)."""
+        params: dict[str, Any] = {"hierarchy": "false", "limit": limit}
+        if object_external_id:
+            params["filter"] = f"ObjektaId={object_external_id}"
+        with self._client() as c:
+            r = self._request(c, "GET", f"{self.endpoints['readings_query']}/query",
+                              params=params)
+            data = r.json()
+        return [self._reading_row(it) for it in self._items(data)]
+
+    def sync_readings(self, mode: str = "new") -> list[dict[str, Any]]:
+        """Инкрементальная синхронизация показаний через `/sync/{mode}`.
+
+        mode ∈ {"new", "changed", "edited", "deleted"}.
+        """
+        with self._client() as c:
+            r = self._request(
+                c, "GET", f"{self.endpoints['readings_query']}/sync/{mode}"
+            )
+            data = r.json()
+        return [self._reading_row(it) for it in self._items(data)]
 
     def push_readings(self, readings: list[dict[str, Any]]) -> PushResult:
         """Записывает показания как акт изменения счётчиков (TdmPNSPnaSkaIzmBL).
