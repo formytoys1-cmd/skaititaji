@@ -24,6 +24,8 @@ from app.models import (
     User,
     UserRole,
 )
+from app.tenancy import owned_building as _owned_building
+from app.tenancy import owned_unit as _owned_unit
 from app.web import flash, render
 
 router = APIRouter()
@@ -35,23 +37,6 @@ def _manager_org(session: Session, user: User) -> Organization | None:
     if user.organization_id:
         return session.get(Organization, user.organization_id)
     return session.exec(select(Organization)).first()
-
-
-def _owned_building(session: Session, org: Organization, building_id: int) -> Building | None:
-    b = session.get(Building, building_id)
-    if b and b.organization_id == org.id:
-        return b
-    return None
-
-
-def _owned_unit(session: Session, org: Organization, unit_id: int) -> Unit | None:
-    u = session.get(Unit, unit_id)
-    if not u:
-        return None
-    b = session.get(Building, u.building_id)
-    if b and b.organization_id == org.id:
-        return u
-    return None
 
 
 # --------------------------------------------------------------------------- #
