@@ -12,6 +12,8 @@ from app.auth import (
     login_user,
     logout_user,
 )
+from app.auth_providers.base import AuthError, resolve_user
+from app.auth_providers.registry import get_auth_provider
 from app.config import settings
 from app.csrf import csrf_protect
 from app.database import get_session
@@ -132,6 +134,72 @@ def set_language(request: Request, code: str):
         samesite="lax", httponly=True, secure=secure,
     )
     return resp
+
+
+# --------------------------------------------------------------------------- #
+# eIDAS-вход: банк / Smart-ID / eParaksts (AUTH-001)
+# --------------------------------------------------------------------------- #
+@router.get("/eidas/login")
+def eidas_login_form(
+    request: Request,
+    current_user: User | None = Depends(get_current_user),
+):
+    if current_user:
+        return RedirectResponse(_ROLE_HOME.get(current_user.role, "/"), 303)
+    return render(request, "eidas_login.html", current_user=None)
+
+
+@router.post("/eidas/login")
+def eidas_login_submit(
+    request: Request,
+    identifier: str = Form(...),
+    session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
+):
+    """Единый поток eIDAS (start→callback) для демо/mock-режима.
+
+    В mock-режиме (дефолт) внешний вызов эмулируется, поэтому старт и callback
+    выполняются сразу. С реальным провайдером здесь будет промежуточный экран
+    ожидания подтверждения на устройстве пользователя.
+    """
+    identifier = identifier.strip()
+    retry_after = _rate_limit(request, "eidas", identifier)
+    if retry_after is not None:
+        flash(request, "Pārāk daudz mēģinājumu. Mēģiniet vēlāk.", "error")
+        resp = render(request, "eidas_login.html", current_user=None, status_code=429)
+        resp.headers["Retry-After"] = str(int(retry_after) + 1)
+        return resp
+
+    provider = get_auth_provider("eidas")
+    try:
+        started = provider.start(identifier=identifier)
+        identity = provider.callback(
+            session_id=started.session_id, identifier=identifier
+        )
+    except AuthError:
+        # Единый ответ без раскрытия деталей (SEC-006).
+        flash(request, "eIDAS autentifikācija neizdevās.", "error")
+        return RedirectResponse("/eidas/login", 303)
+
+    user = resolve_user(session, identity)
+    if user is None:
+        # Личность подтверждена, но аккаунта нет — направляем на регистрацию.
+        session.commit()
+        flash(
+            request,
+            "Autentifikācija veiksmīga. Lūdzu, reģistrējieties ar konta numuru.",
+            "info",
+        )
+        return RedirectResponse("/registreties", 303)
+
+    if not user.is_active:
+        flash(request, "Konts ir deaktivizēts.", "error")
+        return RedirectResponse("/eidas/login", 303)
+
+    session.commit()  # фиксируем привязку external_subject, сделанную resolve_user
+    login_user(request, user)
+    flash(request, f"Sveiki, {user.full_name}!", "success")
+    return RedirectResponse(_ROLE_HOME.get(user.role, "/"), 303)
 
 
 # --------------------------------------------------------------------------- #

@@ -194,6 +194,11 @@ class User(SQLModel, table=True):
     phone: Optional[str] = None
     locale: str = Field(default="lv")
     is_active: bool = Field(default=True)
+    # AUTH-001: связь с внешней (eIDAS) личностью. Заполняется, когда житель
+    # входит через банк / Smart-ID / eParaksts. Для локального (email+пароль)
+    # входа остаются пустыми — обратная совместимость сохранена.
+    external_provider: Optional[str] = Field(default=None, index=True)
+    external_subject: Optional[str] = Field(default=None, index=True)
     created_at: datetime = Field(default_factory=utcnow)
 
     organization: Optional[Organization] = Relationship(back_populates="users")

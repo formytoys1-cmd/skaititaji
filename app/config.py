@@ -55,6 +55,21 @@ class Settings:
         self.visma_password: str = os.getenv("VISMA_PASSWORD", "")
         self.visma_mock: bool = os.getenv("VISMA_MOCK", "1") == "1"
 
+        # AUTH-001: eIDAS-аутентификация (Smart-ID / eParaksts).
+        # ТЗ требует вход через банк / Smart-ID / eParaksts, как в латвийских
+        # порталах. Реальные вызовы внешнего провайдера — за флагом EIDAS_MOCK,
+        # который по умолчанию ВКЛЮЧЁН (mock), чтобы демо и тесты работали без
+        # реального провайдера (как сделано для Visma). Эндпоинты/секреты —
+        # только из окружения.
+        self.eidas_mock: bool = os.getenv("EIDAS_MOCK", "1") == "1"
+        self.eidas_base_url: str = os.getenv("EIDAS_BASE_URL", "")
+        self.eidas_relying_party_uuid: str = os.getenv(
+            "EIDAS_RELYING_PARTY_UUID", ""
+        )
+        self.eidas_relying_party_name: str = os.getenv(
+            "EIDAS_RELYING_PARTY_NAME", ""
+        )
+
     @staticmethod
     def _detect_production() -> bool:
         """Боевое окружение по явным сигналам, не по DEBUG.
