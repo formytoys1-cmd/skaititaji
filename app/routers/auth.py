@@ -23,6 +23,7 @@ from app.models import (
     User,
     UserRole,
 )
+from app.ratelimit import auth_limiter, client_ip
 from app.web import flash, render
 
 router = APIRouter()
@@ -32,6 +33,24 @@ _ROLE_HOME = {
     UserRole.MANAGER: "/parvalde",
     UserRole.SUPERADMIN: "/admin",
 }
+
+# Единый ответ для неуспешной аутентификации (SEC-006, анти-enumeration):
+# один и тот же текст независимо от того, существует ли email.
+_AUTH_FAILED_MSG = "Nepareizs e-pasts vai parole."
+
+
+def _rate_limit(request: Request, scope: str, identity: str) -> float | None:
+    """Проверяет лимит попыток по IP+identity. Возвращает retry_after (сек),
+    если запрос нужно отклонить (429), иначе None. Дополнительно применяет
+    экспоненциальную задержку между попытками (анти-брутфорс)."""
+    import time
+
+    key = f"{scope}:{client_ip(request)}:{identity.lower().strip()}"
+    delay = auth_limiter.delay_for(key)
+    if delay > 0:
+        time.sleep(min(delay, 2.0))  # ограничиваем, чтобы не держать воркер долго
+    allowed, retry_after = auth_limiter.hit(key)
+    return None if allowed else retry_after
 
 
 @router.get("/login")
@@ -52,9 +71,16 @@ def login_submit(
     session: Session = Depends(get_session),
     _csrf: None = Depends(csrf_protect),
 ):
+    retry_after = _rate_limit(request, "login", email)
+    if retry_after is not None:
+        flash(request, "Pārāk daudz mēģinājumu. Mēģiniet vēlāk.", "error")
+        resp = render(request, "login.html", current_user=None, status_code=429)
+        resp.headers["Retry-After"] = str(int(retry_after) + 1)
+        return resp
     user = authenticate(session, email, password)
     if not user:
-        flash(request, "Nepareizs e-pasts vai parole.", "error")
+        # SEC-006: единый ответ без раскрытия существования email.
+        flash(request, _AUTH_FAILED_MSG, "error")
         return RedirectResponse("/login", 303)
     login_user(request, user)
     flash(request, f"Sveiki, {user.full_name}!", "success")
@@ -73,6 +99,13 @@ def demo_login(
     # маршрута нет), чтобы не раскрывать его наличие.
     if not settings.demo_login_enabled:
         raise HTTPException(status_code=404)
+    retry_after = _rate_limit(request, "demo-login", role)
+    if retry_after is not None:
+        flash(request, "Pārāk daudz mēģinājumu. Mēģiniet vēlāk.", "error")
+        resp = RedirectResponse("/login", 303)
+        resp.status_code = 429
+        resp.headers["Retry-After"] = str(int(retry_after) + 1)
+        return resp
     emails = {
         "resident": "resident@demo.lv",
         "manager": "manager@demo.lv",
@@ -126,6 +159,13 @@ def register_submit(
 ):
     email = email.lower().strip()
     account_number = account_number.strip()
+
+    retry_after = _rate_limit(request, "register", email)
+    if retry_after is not None:
+        flash(request, "Pārāk daudz mēģinājumu. Mēģiniet vēlāk.", "error")
+        resp = render(request, "register.html", current_user=None, status_code=429)
+        resp.headers["Retry-After"] = str(int(retry_after) + 1)
+        return resp
 
     if len(password) < 6:
         flash(request, "Parolei jābūt vismaz 6 rakstzīmes.", "error")
