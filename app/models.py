@@ -275,6 +275,30 @@ class IntegrationLog(SQLModel, table=True):
 
 
 # --------------------------------------------------------------------------- #
+# OPS-001 — журнал аудита действий
+# --------------------------------------------------------------------------- #
+class AuditLog(SQLModel, table=True):
+    """Неизменяемый журнал: кто, что, когда, старое/новое значение.
+
+    Записи создаются на всех mutating-операциях с показаниями и на изменениях
+    статусов/ролей. Строки трактуются как append-only: их нельзя изменять или
+    удалять (обеспечивается на уровне приложения — записи не редактируются).
+    """
+    __tablename__ = "audit_log"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    actor_id: Optional[int] = Field(
+        default=None, foreign_key="user.id", index=True
+    )                                                   # кто выполнил действие
+    action: str = Field(index=True)                     # reading_submit, reading_status_change...
+    entity_type: str = Field(index=True)                # reading | user | ...
+    entity_id: Optional[int] = Field(default=None, index=True)
+    old_value: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    new_value: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+
+
+# --------------------------------------------------------------------------- #
 # Обратная связь (консоль модератора → агент)
 # --------------------------------------------------------------------------- #
 class FeedbackThread(SQLModel, table=True):

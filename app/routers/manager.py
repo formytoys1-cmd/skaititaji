@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session, select
 
+from app.audit import record_audit
 from app.auth import require_user
 from app.csrf import csrf_protect
 from app.database import get_session
@@ -243,11 +244,22 @@ def sync_to_visma(
 
     if result.ok:
         for r, ext in zip(to_sync, result.external_ids + [None] * len(to_sync)):
+            old_status = r.status.value
             r.status = ReadingStatus.SYNCED
             r.synced_at = datetime.utcnow()
             if ext:
                 r.external_id = ext
             session.add(r)
+            record_audit(
+                session,
+                actor_id=user.id,
+                action="reading_status_change",
+                entity_type="reading",
+                entity_id=r.id,
+                old_value={"status": old_status},
+                new_value={"status": ReadingStatus.SYNCED.value},
+                commit=False,
+            )
         flash(request, result.message, "success")
     else:
         flash(request, f"Sinhronizācijas kļūda: {result.message}", "error")

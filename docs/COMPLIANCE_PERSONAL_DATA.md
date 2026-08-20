@@ -39,3 +39,12 @@ Pārbaudi īsteno `authorize_subject_access` ([app/gdpr.py](../app/gdpr.py)).
 Rādījumu glabāšana atbilst grāmatvedības prasībām (10 gadi). Konta dzēšana
 neizdzēš vēsturiskos rādījumus, bet noņem to piesaisti personai (anonimizācija).
 Audit žurnāls ir append-only un netiek dzēsts.
+
+## 5. Audit žurnāls (OPS-001)
+
+Tabula `audit_log` glabā nemainīgus ierakstus par mutējošām darbībām ar
+rādījumiem un statusu/lomu izmaiņām: `actor_id` (kas), `action` (kas notika),
+`entity_type`/`entity_id`, `old_value`/`new_value` (JSON) un `created_at` (kad).
+Ieraksti tiek veidoti tikai caur `record_audit` ([app/audit.py](../app/audit.py))
+un nekad netiek atjaunināti vai dzēsti (append-only). Skatīt migrāciju
+`alembic/versions/f21d22a66b1d_audit_log_table.py`.

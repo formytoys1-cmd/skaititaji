@@ -110,6 +110,8 @@ def upsert_reading(
     meter: Meter,
     value: float,
     period: str,
+    *,
+    actor_id: Optional[int] = None,
     **kwargs,
 ) -> Reading:
     """Создаёт или обновляет показание за период (идемпотентно, без гонок).
@@ -119,8 +121,36 @@ def upsert_reading(
     - при гонке (две параллельные вставки) одна из них получит IntegrityError —
       мы откатываемся и повторяем как обновление уже существующей строки;
     - правило «новое показание ≥ предыдущего» проверяется в validate_and_build.
+
+    OPS-001: любая mutating-операция пишет неизменяемую запись в audit_log
+    (создание — ``reading_create``, обновление — ``reading_update``). ``actor_id``
+    — кто выполняет действие (может отличаться от submitted_by_id).
     """
     from sqlalchemy.exc import IntegrityError, OperationalError
+
+    from app.audit import record_audit
+
+    def _snapshot(r: Reading) -> dict:
+        return {
+            "value": r.value,
+            "consumption": r.consumption,
+            "period": r.period,
+            "status": r.status.value,
+            "source": r.source.value,
+        }
+
+    def _audit(action: str, reading: Reading, old: Optional[dict]) -> None:
+        record_audit(
+            session,
+            actor_id=actor_id,
+            action=action,
+            entity_type="reading",
+            entity_id=reading.id,
+            old_value=old,
+            new_value=_snapshot(reading),
+            commit=False,
+        )
+        session.commit()
 
     def _apply(existing: Reading, new: Reading) -> None:
         existing.value = new.value
@@ -135,10 +165,12 @@ def upsert_reading(
     existing = reading_for_period(session, meter.id, period)
     new = validate_and_build(session, meter, value, period, **kwargs)
     if existing:
+        old_snapshot = _snapshot(existing)
         _apply(existing, new)
         session.add(existing)
         session.commit()
         session.refresh(existing)
+        _audit("reading_update", existing, old_snapshot)
         return existing
 
     session.add(new)
@@ -155,14 +187,18 @@ def upsert_reading(
             session.add(retry)
             session.commit()
             session.refresh(retry)
+            _audit("reading_create", retry, None)
             return retry
+        old_snapshot = _snapshot(existing)
         rebuilt = validate_and_build(session, meter, value, period, **kwargs)
         _apply(existing, rebuilt)
         session.add(existing)
         session.commit()
         session.refresh(existing)
+        _audit("reading_update", existing, old_snapshot)
         return existing
     session.refresh(new)
+    _audit("reading_create", new, None)
     return new
 
 

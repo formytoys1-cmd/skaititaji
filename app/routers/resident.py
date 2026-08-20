@@ -107,7 +107,7 @@ async def submit(
         try:
             reading = upsert_reading(
                 session, meter, value, period,
-                submitted_by_id=user.id,
+                submitted_by_id=user.id, actor_id=user.id,
             )
             submitted += 1
             if reading.is_anomaly:

@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
+from app.audit import record_audit
 from app.auth import require_user
 from app.csrf import csrf_protect
 from app.database import get_session
@@ -59,4 +60,13 @@ def erase(
 ):
     _authorize(session, user, subject_id)
     summary = erase_subject(session, subject_id)
+    record_audit(
+        session,
+        actor_id=user.id,
+        action="gdpr_erase",
+        entity_type="user",
+        entity_id=subject_id,
+        old_value=None,
+        new_value=summary,
+    )
     return JSONResponse({"status": "erased", **summary})
