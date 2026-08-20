@@ -1,0 +1,88 @@
+# Авто-мердж ветки форк-агента в main с обязательными гейтами.
+#
+# Кто может запустить:
+#  - вручную (workflow_dispatch) — я из main-чата или пользователь через UI;
+#  - repository_dispatch (event_type: automerge) — форк-агент или мост из консоли.
+#
+# Перед мерджем гоняются гейты (импорт приложения + a11y WCAG 2.2 AA + PWA smoke).
+# Мердж выполняется ТОЛЬКО если все гейты зелёные — безопасно для продакшна.
+name: automerge
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Ветка для мерджа в main"
+        required: true
+        default: "agent/console"
+  repository_dispatch:
+    types: [automerge]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: automerge
+  cancel-in-progress: false
+
+jobs:
+  gate-and-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine branch
+        id: vars
+        run: |
+          BRANCH="${{ github.event.inputs.branch }}"
+          if [ -z "$BRANCH" ]; then BRANCH="${{ github.event.client_payload.branch }}"; fi
+          if [ -z "$BRANCH" ]; then BRANCH="agent/console"; fi
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "Мердж ветки: $BRANCH"
+
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.vars.outputs.branch }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+
+      - name: Install app deps
+        run: pip install -r requirements.txt
+
+      - name: Gate — import
+        run: python -c "import app.main; print('import ok')"
+
+      - name: Start app
+        run: |
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/health && break || sleep 1; done
+
+      - name: Install audit deps
+        working-directory: tools/audit
+        run: |
+          npm install playwright@1.48.0
+          npx playwright install --with-deps chromium
+
+      - name: Gate — a11y (WCAG 2.2 AA)
+        working-directory: tools/audit
+        env: { BASE_URL: http://127.0.0.1:8000 }
+        run: node a11y.mjs
+
+      - name: Gate — PWA smoke
+        env: { BASE_URL: http://127.0.0.1:8000 }
+        run: python tools/audit/pwa_check.py http://127.0.0.1:8000
+
+      - name: Merge branch into main
+        if: success()
+        env:
+          BRANCH: ${{ steps.vars.outputs.branch }}
+        run: |
+          git config user.name "skaititaji-automerge"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git merge --no-ff "origin/$BRANCH" -m "merge: $BRANCH → main (automerge CI)"
+          git push origin main
+          echo "✅ Merged $BRANCH → main"

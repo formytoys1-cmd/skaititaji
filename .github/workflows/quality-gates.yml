@@ -37,6 +37,8 @@ jobs:
         run: node a11y.mjs
       - name: Security headers gate
         run: python tools/audit/check_headers.py http://127.0.0.1:8000/
+      - name: PWA smoke gate
+        run: python tools/audit/pwa_check.py http://127.0.0.1:8000
       - name: Upload a11y report
         if: always()
         uses: actions/upload-artifact@v4

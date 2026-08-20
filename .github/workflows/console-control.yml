@@ -1,0 +1,29 @@
+# Мост управления из консоли обратной связи → GitHub Actions.
+# Опрашивает боевой инбокс и по команде [merge] запускает workflow automerge.
+# Позволяет пользователю инициировать безопасный CI-мердж прямо из консоли.
+name: console-control
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # каждые 10 минут
+  workflow_dispatch: {}
+permissions:
+  actions: write        # для repository_dispatch/запуска automerge
+  contents: read
+concurrency:
+  group: console-control
+  cancel-in-progress: false
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install deps
+        run: pip install httpx
+      - name: Poll console for control commands
+        env:
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SKAIT_BASE_URL: https://skaititaji.onrender.com
+        run: python tools/console_control.py
