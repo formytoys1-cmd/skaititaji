@@ -30,9 +30,17 @@
 
 Для демо по умолчанию включён MOCK-режим (``settings.visma_mock``): ответы API
 эмулируются, чтобы платформа работала без реального сервера Horizon.
+
+Устойчивость (VISMA-002): идемпотентные операции (все GET и запись показаний)
+выполняются с ретраями и экспоненциальным backoff на 429/5xx и временных
+сетевых ошибках; 4xx (кроме 429) поднимаются сразу. Запись показаний несёт
+``Idempotency-Key``, чтобы обрыв после отправки не создавал дубль акта.
 """
 from __future__ import annotations
 
+import logging
+import time
+import uuid
 from typing import Any, Optional
 
 import httpx
@@ -43,6 +51,13 @@ from app.integrations.base import (
     ExternalMeter,
     PushResult,
 )
+
+logger = logging.getLogger("app.integrations.visma_horizon")
+
+# Статус-коды, на которых имеет смысл повторить запрос.
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+# Сетевые ошибки, которые считаем временными (обрыв/таймаут).
+RETRYABLE_EXC = (httpx.TransportError, httpx.TimeoutException)
 
 # Коды REST-сервисов Horizon по умолчанию (переопределяемы в integration_config).
 DEFAULT_ENDPOINTS = {
@@ -100,15 +115,59 @@ class VismaHorizonClient(AccountingIntegration):
         )
 
     def _request(
-        self, client: httpx.Client, method: str, url: str, **kwargs: Any
+        self,
+        client: httpx.Client,
+        method: str,
+        url: str,
+        *,
+        retry: bool = True,
+        **kwargs: Any,
     ) -> httpx.Response:
-        """Выполняет HTTP-запрос и поднимает ошибку на 4xx/5xx.
+        """Выполняет HTTP-запрос с ретраями и экспоненциальным backoff.
 
-        (Ретраи/backoff добавляются в VISMA-002.)
+        Ретраи применяются к идемпотентным операциям: все GET, а также POST,
+        помеченные ``retry=True`` и снабжённые заголовком ``Idempotency-Key``
+        (см. :meth:`push_readings`). На retryable-статусах (429/5xx) и временных
+        сетевых ошибках (таймаут/обрыв) запрос повторяется; 4xx (кроме 429)
+        поднимается сразу. 4xx/5xx после исчерпания попыток логируются.
         """
-        r = client.request(method, url, **kwargs)
-        r.raise_for_status()
-        return r
+        attempts = self.max_retries if retry else 1
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, attempts + 1):
+            try:
+                r = client.request(method, url, **kwargs)
+            except RETRYABLE_EXC as exc:
+                last_exc = exc
+                if attempt >= attempts:
+                    logger.error(
+                        "Visma %s %s failed after %d attempts: %s",
+                        method, url, attempt, exc,
+                    )
+                    raise
+                self._sleep_backoff(attempt)
+                continue
+
+            if r.status_code in RETRYABLE_STATUS and attempt < attempts:
+                logger.warning(
+                    "Visma %s %s -> %d, retry %d/%d",
+                    method, url, r.status_code, attempt, attempts,
+                )
+                self._sleep_backoff(attempt)
+                continue
+            if r.status_code >= 400:
+                logger.error("Visma %s %s -> %d: %s",
+                             method, url, r.status_code, r.text[:500])
+            r.raise_for_status()
+            return r
+
+        # Недостижимо при attempts >= 1, но на всякий случай.
+        assert last_exc is not None
+        raise last_exc
+
+    def _sleep_backoff(self, attempt: int) -> None:
+        delay = self.backoff_factor * (2 ** (attempt - 1))
+        if delay > 0:
+            time.sleep(delay)
 
     @staticmethod
     def _items(data: Any) -> list[dict]:
@@ -200,19 +259,29 @@ class VismaHorizonClient(AccountingIntegration):
             data = r.json()
         return [self._reading_row(it) for it in self._items(data)]
 
-    def push_readings(self, readings: list[dict[str, Any]]) -> PushResult:
+    def push_readings(
+        self, readings: list[dict[str, Any]], *, idempotency_key: Optional[str] = None
+    ) -> PushResult:
         """Записывает показания как акт изменения счётчиков (TdmPNSPnaSkaIzmBL).
 
         SL-сервисы показаний (TdmPNSSkaLigRadSL / ...NolRadSL) доступны только на
         чтение, поэтому запись выполняется через BL-акт по шаблону.
+
+        Запись идемпотентна: каждому вызову присваивается стабильный
+        ``Idempotency-Key`` (заголовок), который сопровождает и первую отправку,
+        и все ретраи. Если соединение оборвалось уже после приёма запроса
+        сервером, повтор с тем же ключом вернёт существующий акт, а не создаст
+        дубль. Ключ можно задать снаружи для сквозной идемпотентности вызова.
         """
         if self.mock:
             return self._mock_push(readings)
         act = self.endpoints["readings_write_act"]
+        key = idempotency_key or f"skt-{uuid.uuid4().hex}"
+        headers = {"Idempotency-Key": key}
         pushed, ext_ids = 0, []
         with self._client() as c:
-            tmpl = c.get(f"{act}/template")
-            tmpl.raise_for_status()
+            # GET шаблона — идемпотентно, с ретраями.
+            tmpl = self._request(c, "GET", f"{act}/template")
             templates = self._items(tmpl.json())
             tmpl_pk = templates[0].get("Pk") if templates else None
 
@@ -225,10 +294,10 @@ class VismaHorizonClient(AccountingIntegration):
                 }
                 for rd in readings
             ]
-            payload = {"Rows": rows}
+            payload = {"Rows": rows, "IdempotencyKey": key}
             url = f"{act}/template/{tmpl_pk}" if tmpl_pk else act
-            r = c.post(url, json=payload)
-            r.raise_for_status()
+            # POST повторяем безопасно: ключ идемпотентности защищает от дубля.
+            r = self._request(c, "POST", url, json=payload, headers=headers)
             body = r.json() if r.content else {}
             pushed = len(rows)
             ext_ids.append(str(body.get("Pk", "")))
