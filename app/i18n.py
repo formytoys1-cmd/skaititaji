@@ -219,6 +219,14 @@ T: dict[str, dict[str, str]] = {
         "ru": "В продакшене планируется: Smart-ID · eParaksts · вход через банк",
         "en": "Planned for production: Smart-ID · eParaksts · bank authentication",
     },
+    "login.social": {
+        "lv": "Pieteikties ar pārbaudītu pakalpojumu:",
+        "ru": "Войти через проверенный сервис:",
+        "en": "Sign in with a trusted service:",
+    },
+    "login.continue_with": {
+        "lv": "Turpināt ar", "ru": "Продолжить с", "en": "Continue with",
+    },
     "login.no_account": {"lv": "Nav konta?", "ru": "Нет аккаунта?",
                          "en": "No account?"},
     "login.see_demo": {"lv": "Skatīt demo piekļuvi →", "ru": "Посмотреть демо-доступ →",

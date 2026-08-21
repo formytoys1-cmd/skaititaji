@@ -52,6 +52,12 @@ QR «живые» — их отдаёт само приложение, поэт�
 - **Житель** регистрируется на `/registreties`: имя, e‑mail, пароль и **номер
   лицевого счёта** квартиры (его выдаёт apsaimniekotājs). Аккаунт привязывается к
   квартире по account_number.
+- **Вход через проверенные сервисы (OAuth, free):** Google / Microsoft / GitHub.
+  Кнопки на `/login` и `/registreties` появляются, когда заданы env
+  `<PROVIDER>_CLIENT_ID/SECRET`. Существующий e‑mail → сразу вход; новый юзер →
+  просим только номер лицевого счёта (`/registreties/pabeigt`) и создаём
+  подтверждённый аккаунт. Настройка: `docs/OAUTH_SETUP.md`. Callback:
+  `https://skaititaji.onrender.com/auth/<provider>/callback`.
 - **Подтверждение e‑mail:** после регистрации на почту уходит письмо со ссылкой
   `/verificet?token=…` (действует 24 ч). До подтверждения вход заблокирован
   (ведёт на повторную отправку `/verificet/atkartot`). Демо/eIDAS‑аккаунты уже

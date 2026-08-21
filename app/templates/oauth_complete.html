@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Pabeigt reģistrāciju — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-md mx-auto px-4 py-16">
+  <div class="bg-white rounded-2xl border border-slate-200 p-8">
+    <h1 class="text-2xl font-bold">Pabeigt reģistrāciju</h1>
+    <p class="text-slate-600 text-sm mt-1">
+      Pieteikšanās ar <strong>{{ provider_name }}</strong> veiksmīga{% if email %}
+      (<span class="text-slate-800">{{ email }}</span>){% endif %}.
+      Norādiet dzīvokļa konta numuru, lai pabeigtu reģistrāciju.
+    </p>
+    <form method="post" action="/registreties/pabeigt" class="mt-6 space-y-4" onsubmit="lockSubmit(this)">
+{% include "_csrf.html" %}
+      <div>
+        <label for="account_number" class="block text-sm font-medium mb-1">{{ t('reg.account') }}</label>
+        <input id="account_number" name="account_number" type="text" required autofocus
+               aria-describedby="acc_hint"
+               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none">
+        <p id="acc_hint" class="text-xs text-slate-600 mt-1">{{ t('reg.account_hint') }}</p>
+      </div>
+      <button type="submit" class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">{{ t('reg.submit') }}</button>
+    </form>
+    <p class="mt-6 text-sm text-slate-600"><a href="/login" class="brand-text underline">{{ t('nav.login') }}</a></p>
+  </div>
+</section>
+{% endblock %}

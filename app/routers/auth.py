@@ -1,6 +1,9 @@
 """Вход и выход."""
 from __future__ import annotations
 
+import hmac
+import secrets
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlmodel import Session, func, select
@@ -19,6 +22,7 @@ from app.auth import (
     logout_user,
 )
 from app.auth_providers.base import AuthError, resolve_user
+from app.auth_providers.oauth import OAuthProvider
 from app.auth_providers.registry import get_auth_provider
 from app.config import settings
 from app.csrf import csrf_protect
@@ -32,6 +36,7 @@ from app.models import (
     User,
     UserRole,
 )
+from app.oauth import enabled_providers
 from app.ratelimit import auth_limiter, client_ip
 from app.verification import create_verification, verify_token
 from app.web import flash, render
@@ -70,7 +75,8 @@ def login_form(
 ):
     if current_user:
         return RedirectResponse(_ROLE_HOME.get(current_user.role, "/"), 303)
-    return render(request, "login.html", current_user=None)
+    return render(request, "login.html",
+                  {"oauth_providers": enabled_providers()}, current_user=None)
 
 
 @router.post("/login")
@@ -245,7 +251,9 @@ def register_form(
 ):
     if current_user:
         return RedirectResponse(_ROLE_HOME.get(current_user.role, "/"), 303)
-    return render(request, "register.html", _antibot_ctx(), current_user=None)
+    ctx = _antibot_ctx()
+    ctx["oauth_providers"] = enabled_providers()
+    return render(request, "register.html", ctx, current_user=None)
 
 
 @router.post("/registreties")
@@ -407,3 +415,174 @@ def resend_submit(
 def logout(request: Request):
     logout_user(request)
     return RedirectResponse("/", 303)
+
+
+# --------------------------------------------------------------------------- #
+# Вход через проверенные сервисы (OAuth 2.0 / OpenID Connect): Google и др.
+# --------------------------------------------------------------------------- #
+def _oauth_redirect_uri(request: Request, provider: str) -> str:
+    """Абсолютный redirect_uri callback'а (должен совпадать с настройкой у провайдера)."""
+    base = settings.public_base_url.rstrip("/")
+    return f"{base}/auth/{provider}/callback"
+
+
+@router.get("/auth/{provider}/login")
+def oauth_login(
+    request: Request,
+    provider: str,
+    current_user: User | None = Depends(get_current_user),
+):
+    if current_user:
+        return RedirectResponse(_ROLE_HOME.get(current_user.role, "/"), 303)
+    try:
+        client = OAuthProvider.from_code(provider)
+    except AuthError:
+        flash(request, "Šis pieteikšanās veids nav pieejams.", "error")
+        return RedirectResponse("/login", 303)
+    # Анти-forgery state, привязанный к сессии (проверяется в callback).
+    state = secrets.token_urlsafe(24)
+    request.session["_oauth_state"] = state
+    request.session["_oauth_provider"] = provider
+    url = client.authorize_url(_oauth_redirect_uri(request, provider), state)
+    return RedirectResponse(url, 303)
+
+
+@router.get("/auth/{provider}/callback")
+def oauth_callback(
+    request: Request,
+    provider: str,
+    code: str = "",
+    state: str = "",
+    error: str = "",
+    session: Session = Depends(get_session),
+):
+    expected = request.session.pop("_oauth_state", None)
+    saved_provider = request.session.pop("_oauth_provider", None)
+    if error or not code:
+        flash(request, "Pieteikšanās atcelta vai neizdevās.", "error")
+        return RedirectResponse("/login", 303)
+    # Проверка state (CSRF/anti-forgery) и соответствия провайдера.
+    if not expected or not state or not hmac.compare_digest(state, expected) \
+            or saved_provider != provider:
+        flash(request, "Nederīgs pieteikšanās stāvoklis. Mēģiniet vēlreiz.", "error")
+        return RedirectResponse("/login", 303)
+    try:
+        client = OAuthProvider.from_code(provider)
+        identity = client.exchange(code, _oauth_redirect_uri(request, provider))
+    except AuthError:
+        flash(request, "Autentifikācija neizdevās.", "error")
+        return RedirectResponse("/login", 303)
+
+    user = resolve_user(session, identity)
+    if user is not None:
+        if not user.is_active:
+            flash(request, "Konts ir deaktivizēts.", "error")
+            return RedirectResponse("/login", 303)
+        # Вход через проверенный сервис = e-mail подтверждён провайдером.
+        if not user.is_verified:
+            user.is_verified = True
+            user.verified_at = __import__("datetime").datetime.utcnow()
+            session.add(user)
+        session.commit()
+        login_user(request, user)
+        flash(request, f"Sveiki, {user.full_name}!", "success")
+        return RedirectResponse(_ROLE_HOME.get(user.role, "/"), 303)
+
+    # Новый пользователь: личность подтверждена, осталось привязать квартиру.
+    request.session["_pending_oauth"] = {
+        "provider": identity.provider,
+        "subject": identity.subject,
+        "email": identity.email or "",
+        "full_name": identity.full_name or "",
+    }
+    flash(request,
+          "Autentifikācija veiksmīga! Norādiet konta numuru, lai pabeigtu reģistrāciju.",
+          "info")
+    return RedirectResponse("/registreties/pabeigt", 303)
+
+
+@router.get("/registreties/pabeigt")
+def oauth_complete_form(request: Request):
+    pending = request.session.get("_pending_oauth")
+    if not pending:
+        return RedirectResponse("/registreties", 303)
+    return render(request, "oauth_complete.html", {
+        "provider_name": pending.get("provider", "").title(),
+        "email": pending.get("email", ""),
+        "full_name": pending.get("full_name", ""),
+    }, current_user=None)
+
+
+@router.post("/registreties/pabeigt")
+def oauth_complete_submit(
+    request: Request,
+    account_number: str = Form(...),
+    session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
+):
+    pending = request.session.get("_pending_oauth")
+    if not pending:
+        return RedirectResponse("/registreties", 303)
+    account_number = account_number.strip()
+
+    unit = session.exec(
+        select(Unit).where(Unit.account_number == account_number)
+    ).first()
+    if not unit:
+        flash(request, "Konta numurs nav atrasts. Sazinieties ar apsaimniekotāju.",
+              "error")
+        return RedirectResponse("/registreties/pabeigt", 303)
+
+    # Вместимость квартиры (запас ×2).
+    if unit.max_residents and unit.max_residents > 0:
+        current = session.exec(
+            select(func.count(UnitResident.id))
+            .where(UnitResident.unit_id == unit.id)
+        ).one()
+        if current >= unit.max_residents:
+            flash(request,
+                  "Šim dzīvoklim jau ir reģistrēts maksimālais lietotāju skaits.",
+                  "error")
+            return RedirectResponse("/registreties/pabeigt", 303)
+
+    email = (pending.get("email") or "").lower().strip()
+    # Если аккаунт с таким e-mail уже есть — привязываем внешний субъект и входим.
+    existing = session.exec(select(User).where(User.email == email)).first() \
+        if email else None
+    if existing:
+        existing.external_provider = pending["provider"]
+        existing.external_subject = pending["subject"]
+        if not existing.is_verified:
+            existing.is_verified = True
+            existing.verified_at = __import__("datetime").datetime.utcnow()
+        session.add(existing)
+        session.add(UnitResident(user_id=existing.id, unit_id=unit.id,
+                                 relation="owner"))
+        session.commit()
+        request.session.pop("_pending_oauth", None)
+        login_user(request, existing)
+        flash(request, f"Sveiki, {existing.full_name}!", "success")
+        return RedirectResponse(_ROLE_HOME.get(existing.role, "/"), 303)
+
+    building = session.get(Building, unit.building_id)
+    org_id = building.organization_id if building else None
+    now = __import__("datetime").datetime.utcnow()
+    user = User(
+        organization_id=org_id,
+        email=email or f"{pending['provider']}_{pending['subject']}@oauth.local",
+        full_name=pending.get("full_name") or "Lietotājs",
+        password_hash=hash_password(secrets.token_urlsafe(24)),  # неиспользуемый
+        role=UserRole.RESIDENT,
+        is_verified=True, verified_at=now,
+        external_provider=pending["provider"],
+        external_subject=pending["subject"],
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    session.add(UnitResident(user_id=user.id, unit_id=unit.id, relation="owner"))
+    session.commit()
+    request.session.pop("_pending_oauth", None)
+    login_user(request, user)
+    flash(request, f"Reģistrācija veiksmīga! Sveiki, {user.full_name}.", "success")
+    return RedirectResponse("/dzivoklis", 303)
