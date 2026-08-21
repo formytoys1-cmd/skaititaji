@@ -1,0 +1,72 @@
+name: db-expiry-watch
+# Напоминание о сроке бесплатной БД Render (free Postgres удаляется по истечении).
+# Работает бесплатно, без секретов — сравнивает текущую дату с фиксированным сроком.
+# За EXPIRY_WARN_DAYS дней до даты заводит (без дублей) GitHub Issue.
+# Обновить дату при пересоздании/миграции БД: переменная EXPIRY ниже.
+on:
+  schedule:
+    - cron: "17 6 * * *"    # ежедневно 06:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  EXPIRY: "2026-09-18"        # дата истечения free Render Postgres (skaititaji-db-oregon)
+  EXPIRY_WARN_DAYS: "14"      # за сколько дней начинать предупреждать
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute days left
+        id: calc
+        run: |
+          today=$(date -u +%s)
+          exp=$(date -u -d "${EXPIRY}" +%s)
+          days=$(( (exp - today) / 86400 ))
+          echo "days_left=$days" >> "$GITHUB_OUTPUT"
+          echo "Free Render Postgres истекает $EXPIRY — осталось $days дн."
+      - name: Warn via issue if close
+        if: ${{ fromJSON(steps.calc.outputs.days_left) <= fromJSON(env.EXPIRY_WARN_DAYS) }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const days = Number("${{ steps.calc.outputs.days_left }}");
+            const expiry = process.env.EXPIRY;
+            const label = "infra";
+            const title = "⏳ Free Render Postgres истекает — нужен план миграции";
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: label,
+            });
+            const dup = existing.data.find(i => i.title === title);
+            const body = [
+              `Бесплатная БД Render (**skaititaji-db-oregon**) истекает **${expiry}** — осталось **${days} дн.**`,
+              "",
+              "После истечения Render удаляет free-Postgres → **потеря данных**.",
+              "",
+              "**Бесплатные варианты (без срока):**",
+              "- Neon — https://neon.tech (free Postgres, без истечения)",
+              "- Supabase — https://supabase.com",
+              "",
+              "**План миграции (free → free):**",
+              "1. Создать free-БД у провайдера, получить `DATABASE_URL` (Postgres).",
+              "2. (Опц.) перенести данные: `pg_dump` со старой → `psql` в новую.",
+              "3. В Render Web Service заменить env `DATABASE_URL` на новый.",
+              "4. Деплой: `alembic upgrade head` применится сам (миграции self-healing).",
+              "5. Обновить дату `EXPIRY` в `.github/workflows/db-expiry-watch.yml`",
+              "   (или удалить воркфлоу, если провайдер без срока).",
+            ].join("\n");
+            if (dup) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: dup.number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: [label, "monitoring"],
+              });
+            }
