@@ -30,6 +30,43 @@
         </div>
         <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Pievienot</button>
       </form>
+
+      <div class="mt-6 pt-5 border-t border-slate-200">
+        <div class="font-semibold mb-1">Ģenerēt dzīvokļus</div>
+        <p class="text-xs text-slate-600 mb-3">Piem. 119. sērija: 2 kāpņutelpas × 10 stāvi × 4 dzīvokļi = 80.</p>
+        <form method="post" action="/parvalde/objekti/{{ building.id }}/generate" class="space-y-3 text-sm" onsubmit="lockSubmit(this)">
+{% include "_csrf.html" %}
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label for="entrances" class="block font-medium mb-1">Kāpņutelpas</label>
+              <input id="entrances" name="entrances" inputmode="numeric" value="2" class="w-full px-2 py-2 rounded-lg border border-slate-300">
+            </div>
+            <div>
+              <label for="floors" class="block font-medium mb-1">Stāvi *</label>
+              <input id="floors" name="floors" inputmode="numeric" required value="10" class="w-full px-2 py-2 rounded-lg border border-slate-300">
+            </div>
+            <div>
+              <label for="per_floor" class="block font-medium mb-1">Dz./stāvā *</label>
+              <input id="per_floor" name="per_floor" inputmode="numeric" required value="4" class="w-full px-2 py-2 rounded-lg border border-slate-300">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="start_number" class="block font-medium mb-1">Sākt no Nr.</label>
+              <input id="start_number" name="start_number" inputmode="numeric" value="1" class="w-full px-2 py-2 rounded-lg border border-slate-300">
+            </div>
+            <div>
+              <label for="max_residents" class="block font-medium mb-1">Lietotāji/dz.</label>
+              <input id="max_residents" name="max_residents" inputmode="numeric" value="2" class="w-full px-2 py-2 rounded-lg border border-slate-300">
+            </div>
+          </div>
+          <div>
+            <label for="account_prefix" class="block font-medium mb-1">Konta prefikss</label>
+            <input id="account_prefix" name="account_prefix" class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="LV-{{ building.id }}-">
+          </div>
+          <button class="w-full py-2.5 rounded-lg bg-slate-800 text-white font-semibold hover:bg-slate-900">Ģenerēt dzīvokļus</button>
+        </form>
+      </div>
     </div>
 
     <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden">

@@ -166,6 +166,7 @@ def seed_demo(reset: bool = False) -> None:
                 organization_id=org.id, email=email, full_name=name,
                 password_hash=hash_password("demo1234"),
                 role=UserRole.RESIDENT, locale="lv",
+                is_verified=True,
             )
             session.add(resident)
             session.commit()
@@ -183,12 +184,14 @@ def seed_demo(reset: bool = False) -> None:
             full_name="Māris Vadītājs",
             password_hash=hash_password("demo1234"),
             role=UserRole.MANAGER, locale="lv",
+            is_verified=True,
         ))
         session.add(User(
             organization_id=None, email="admin@demo.lv",
             full_name="Platform Admin",
             password_hash=hash_password("demo1234"),
             role=UserRole.SUPERADMIN, locale="lv",
+            is_verified=True,
         ))
         session.commit()
 
@@ -266,6 +269,7 @@ def ensure_realistic_apartment(
             full_name="Sergejs Pivčaikins",
             password_hash=hash_password("demo1234"),
             role=UserRole.RESIDENT, locale="lv",
+            is_verified=True,
         )
         session.add(realres)
         session.commit()

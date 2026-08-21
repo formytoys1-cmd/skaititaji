@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Atkārtot apstiprinājumu — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-md mx-auto px-4 py-16">
+  <div class="bg-white rounded-2xl border border-slate-200 p-8">
+    <h1 class="text-2xl font-bold">Nosūtīt apstiprinājumu vēlreiz</h1>
+    <p class="text-slate-600 text-sm mt-1">
+      Ievadiet e-pastu — ja konts eksistē un nav apstiprināts, nosūtīsim jaunu saiti.
+    </p>
+    <form method="post" action="/verificet/atkartot" class="mt-6 space-y-4" onsubmit="lockSubmit(this)">
+{% include "_csrf.html" %}
+      <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;overflow:hidden">
+        <label for="{{ honeypot_field }}">Company</label>
+        <input id="{{ honeypot_field }}" name="{{ honeypot_field }}" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <input type="hidden" name="{{ ts_field }}" value="{{ form_ts }}">
+      <div>
+        <label for="email" class="block text-sm font-medium mb-1">{{ t('reg.email') }}</label>
+        <input id="email" name="email" type="email" required autocomplete="email"
+               class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:brand-border outline-none">
+      </div>
+      <button type="submit" class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Nosūtīt saiti</button>
+    </form>
+    <p class="mt-6 text-sm text-slate-600"><a href="/login" class="brand-text underline">{{ t('nav.login') }}</a></p>
+  </div>
+</section>
+{% endblock %}

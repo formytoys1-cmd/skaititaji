@@ -70,6 +70,42 @@ class Settings:
             "EIDAS_RELYING_PARTY_NAME", ""
         )
 
+        # Публичный базовый URL (для ссылок в письмах верификации). На Render
+        # берётся из RENDER_EXTERNAL_URL; локально — http://127.0.0.1:8000.
+        self.public_base_url: str = (
+            os.getenv("PUBLIC_BASE_URL")
+            or os.getenv("RENDER_EXTERNAL_URL")
+            or os.getenv("SELF_PING_URL")
+            or "http://127.0.0.1:8000"
+        ).rstrip("/")
+
+        # Отправка почты (верификация e-mail). Free-режим: если SMTP не настроен,
+        # письма пишутся в data/outbox/ и лог (для демо), без внешних сервисов.
+        self.email_host: str = os.getenv("EMAIL_HOST", "")
+        self.email_port: int = int(os.getenv("EMAIL_PORT", "587") or "587")
+        self.email_user: str = os.getenv("EMAIL_USER", "")
+        self.email_password: str = os.getenv("EMAIL_PASSWORD", "")
+        self.email_from: str = os.getenv(
+            "EMAIL_FROM", self.email_user or "no-reply@skaititaji.local"
+        )
+        self.email_use_tls: bool = os.getenv("EMAIL_USE_TLS", "1") == "1"
+
+        # Требовать подтверждение e-mail перед входом (email+пароль).
+        # По умолчанию включено вне тестов; тесты могут отключать через env.
+        self.require_email_verification: bool = (
+            os.getenv("REQUIRE_EMAIL_VERIFICATION", "1") == "1"
+        )
+        # Сколько человек может зарегистрироваться на одну квартиру по умолчанию
+        # (запас ×2, чтобы 2 жильца могли подавать показания).
+        self.default_unit_capacity: int = int(
+            os.getenv("DEFAULT_UNIT_CAPACITY", "2") or "2"
+        )
+
+    @property
+    def email_configured(self) -> bool:
+        """Настроен ли реальный SMTP (иначе используется outbox-фоллбек)."""
+        return bool(self.email_host and self.email_from)
+
     @staticmethod
     def _detect_production() -> bool:
         """Боевое окружение по явным сигналам, не по DEBUG.

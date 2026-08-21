@@ -14,6 +14,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import Session, func, select
 
 from app.auth import require_user
+from app.config import settings
 from app.csrf import csrf_protect
 from app.database import get_session
 from app.models import (
@@ -148,6 +149,77 @@ def create_unit(
     session.commit()
     flash(request, "Dzīvoklis pievienots.", "success")
     return RedirectResponse(f"/parvalde/dzivoklis/{u.id}", 303)
+
+
+@router.post("/parvalde/objekti/{building_id}/generate")
+def generate_units(
+    building_id: int,
+    request: Request,
+    entrances: str = Form("1"),
+    floors: str = Form(...),
+    per_floor: str = Form(...),
+    start_number: str = Form("1"),
+    max_residents: str = Form(""),
+    account_prefix: str = Form(""),
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
+):
+    """Массовая генерация квартир для дома.
+
+    Пример (119-я серия, Islices 3): 2 подъезда × 10 этажей × 4 кв/этаж = 80
+    квартир, нумерация сквозная от start_number. Каждой квартире присваивается
+    лицевой счёт (account_number) для самрегистрации жителя и вместимость
+    max_residents (запас ×2). Уже существующие номера пропускаются.
+    """
+    org = _manager_org(session, user)
+    if not org:
+        return RedirectResponse("/", 303)
+    b = _owned_building(session, org, building_id)
+    if not b:
+        return RedirectResponse("/parvalde/objekti", 303)
+
+    def _int(v: str, default: int = 0) -> int:
+        try:
+            return int(str(v).strip())
+        except (ValueError, TypeError):
+            return default
+
+    n_entr = max(1, _int(entrances, 1))
+    n_floors = max(1, _int(floors, 0))
+    n_per = max(1, _int(per_floor, 0))
+    start = max(1, _int(start_number, 1))
+    cap = _int(max_residents, settings.default_unit_capacity)
+    if cap < 0:
+        cap = settings.default_unit_capacity
+    total = n_entr * n_floors * n_per
+
+    # Защита от абсурдных объёмов (случайных/злонамеренных).
+    if total <= 0 or total > 2000:
+        flash(request, "Nederīgs dzīvokļu skaits (1–2000).", "error")
+        return RedirectResponse(f"/parvalde/objekti/{building_id}", 303)
+
+    existing = {
+        (row.number or "").strip()
+        for row in session.exec(select(Unit).where(Unit.building_id == b.id)).all()
+    }
+    prefix = account_prefix.strip() or f"LV-{b.id}-"
+    created = 0
+    for i in range(total):
+        num = str(start + i)
+        if num in existing:
+            continue
+        session.add(Unit(
+            building_id=b.id, number=num,
+            account_number=f"{prefix}{num}",
+            max_residents=cap,
+        ))
+        created += 1
+    session.commit()
+    flash(request,
+          f"Izveidoti {created} dzīvokļi (izlaisti {total - created} jau esošie).",
+          "success")
+    return RedirectResponse(f"/parvalde/objekti/{building_id}", 303)
 
 
 # --------------------------------------------------------------------------- #

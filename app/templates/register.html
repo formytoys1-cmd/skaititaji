@@ -8,6 +8,12 @@
 
     <form method="post" action="/registreties" class="mt-6 space-y-4" onsubmit="lockSubmit(this)">
 {% include "_csrf.html" %}
+      {# анти-бот: honeypot (скрыт от людей) + подписанная метка времени #}
+      <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;overflow:hidden">
+        <label for="{{ honeypot_field }}">Company</label>
+        <input id="{{ honeypot_field }}" name="{{ honeypot_field }}" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <input type="hidden" name="{{ ts_field }}" value="{{ form_ts }}">
       <div>
         <label for="full_name" class="block text-sm font-medium mb-1">{{ t('reg.name') }}</label>
         <input id="full_name" name="full_name" type="text" required autocomplete="name"

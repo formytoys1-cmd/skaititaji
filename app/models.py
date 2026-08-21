@@ -172,6 +172,9 @@ class Unit(SQLModel, table=True):
     area_m2: Optional[float] = None
     residents_count: Optional[int] = None
     external_id: Optional[str] = None
+    # Сколько пользователей могут зарегистрироваться на эту квартиру (запас ×2,
+    # чтобы 2 жильца могли независимо подавать показания). 0 = без лимита.
+    max_residents: int = Field(default=2)
 
     building: Optional[Building] = Relationship(back_populates="units")
     meters: list["Meter"] = Relationship(back_populates="unit")
@@ -194,6 +197,10 @@ class User(SQLModel, table=True):
     phone: Optional[str] = None
     locale: str = Field(default="lv")
     is_active: bool = Field(default=True)
+    # Подтверждение e-mail (самрегистрация жителя). Пока False — вход по
+    # email+паролю заблокирован. Для eIDAS/демо-аккаунтов ставится True.
+    is_verified: bool = Field(default=False)
+    verified_at: Optional[datetime] = None
     # AUTH-001: связь с внешней (eIDAS) личностью. Заполняется, когда житель
     # входит через банк / Smart-ID / eParaksts. Для локального (email+пароль)
     # входа остаются пустыми — обратная совместимость сохранена.
@@ -213,6 +220,23 @@ class UnitResident(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", index=True)
     unit_id: int = Field(foreign_key="unit.id", index=True)
     relation: str = Field(default="owner")              # owner | tenant
+
+
+class EmailVerification(SQLModel, table=True):
+    """Одноразовый токен подтверждения e-mail (самрегистрация жителя).
+
+    Токен — случайная строка, отправляется ссылкой на почту. При переходе
+    помечается использованным; истёкшие/использованные не принимаются.
+    """
+    __tablename__ = "email_verification"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    token: str = Field(index=True, unique=True)
+    purpose: str = Field(default="verify_email")        # verify_email | reset_password
+    created_at: datetime = Field(default_factory=utcnow)
+    expires_at: datetime
+    used_at: Optional[datetime] = None
 
 
 # --------------------------------------------------------------------------- #

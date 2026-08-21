@@ -94,6 +94,7 @@ class Factory:
             full_name=kw.pop("full_name", f"Test User {i}"),
             password_hash=hash_password(password),
             role=role,
+            is_verified=kw.pop("is_verified", True),
             **kw,
         )
         self.s.add(u)
