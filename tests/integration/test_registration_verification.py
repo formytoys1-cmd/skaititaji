@@ -39,12 +39,23 @@ def _make_unit(factory, **unit_kw):
     return org, b, u
 
 
+def test_register_and_resend_forms_render(client):
+    # GET-страницы должны рендериться (ловит ошибки контекста render()).
+    assert client.get("/registreties").status_code == 200
+    assert client.get("/verificet/atkartot").status_code == 200
+    assert client.get("/registreties/parbaudiet").status_code == 200
+    # honeypot-поле и метка времени присутствуют в форме
+    html = client.get("/registreties").text
+    assert 'name="company"' in html
+    assert 'name="form_ts"' in html
+
+
 def test_full_registration_and_verification(client, factory, engine, csrf):
     org, b, u = _make_unit(factory, account_number="ACC-REG-1", max_residents=2)
 
     r = _register(client, csrf, "ACC-REG-1", "newuser@test.local")
-    assert r.status_code == 303
-    assert r.headers["location"] == "/registreties/parbaudiet"
+    assert r.status_code == 200
+    assert "/verificet?token=" in r.text  # в free-режиме ссылка показана на экране
 
     with Session(engine) as s:
         user = s.exec(select(User).where(User.email == "newuser@test.local")).first()

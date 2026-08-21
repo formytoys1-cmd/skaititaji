@@ -220,12 +220,22 @@ def eidas_login_submit(
 # --------------------------------------------------------------------------- #
 # Самрегистрация жителя (привязка к квартире по лицевому счёту)
 # --------------------------------------------------------------------------- #
-def _send_verification(request: Request, user: User, session: Session) -> None:
-    """Создаёт токен и отправляет письмо со ссылкой подтверждения."""
+def _send_verification(request: Request, user: User, session: Session) -> str:
+    """Создаёт токен, отправляет письмо и возвращает ссылку подтверждения."""
     ev = create_verification(session, user)
     link = f"{settings.public_base_url}/verificet?token={ev.token}"
     subject, body = verification_email(user.full_name, link, settings.app_name)
     send_email(user.email, subject, body)
+    return link
+
+
+def _antibot_ctx() -> dict:
+    """Контекст для форм с анти-бот полями."""
+    return {
+        "form_ts": make_timestamp_token(),
+        "honeypot_field": HONEYPOT_FIELD,
+        "ts_field": TIMESTAMP_FIELD,
+    }
 
 
 @router.get("/registreties")
@@ -235,9 +245,7 @@ def register_form(
 ):
     if current_user:
         return RedirectResponse(_ROLE_HOME.get(current_user.role, "/"), 303)
-    return render(request, "register.html", current_user=None,
-                  form_ts=make_timestamp_token(),
-                  honeypot_field=HONEYPOT_FIELD, ts_field=TIMESTAMP_FIELD)
+    return render(request, "register.html", _antibot_ctx(), current_user=None)
 
 
 @router.post("/registreties")
@@ -264,10 +272,8 @@ def register_submit(
     retry_after = _rate_limit(request, "register", email)
     if retry_after is not None:
         flash(request, "Pārāk daudz mēģinājumu. Mēģiniet vēlāk.", "error")
-        resp = render(request, "register.html", current_user=None,
-                      form_ts=make_timestamp_token(),
-                      honeypot_field=HONEYPOT_FIELD, ts_field=TIMESTAMP_FIELD,
-                      status_code=429)
+        resp = render(request, "register.html", _antibot_ctx(),
+                      current_user=None, status_code=429)
         resp.headers["Retry-After"] = str(int(retry_after) + 1)
         return resp
 
@@ -321,11 +327,15 @@ def register_submit(
     session.commit()
 
     if settings.require_email_verification:
-        _send_verification(request, user, session)
+        link = _send_verification(request, user, session)
         flash(request,
               "Reģistrācija gandrīz pabeigta! Nosūtījām apstiprinājuma saiti uz "
               f"{email}. Atveriet to, lai aktivizētu kontu.", "success")
-        return RedirectResponse("/registreties/parbaudiet", 303)
+        # Free-режим без SMTP: показываем ссылку прямо на экране (это ссылка
+        # самого пользователя), чтобы демо работало без почтового сервера.
+        dev_link = None if settings.email_configured else link
+        return render(request, "verify_sent.html", {"dev_link": dev_link},
+                      current_user=None)
 
     login_user(request, user)
     flash(request, f"Reģistrācija veiksmīga! Sveiki, {user.full_name}.", "success")
@@ -335,7 +345,8 @@ def register_submit(
 @router.get("/registreties/parbaudiet")
 def register_check_email(request: Request):
     """Экран «проверьте почту» после регистрации."""
-    return render(request, "verify_sent.html", current_user=None)
+    return render(request, "verify_sent.html", {"dev_link": None},
+                  current_user=None)
 
 
 @router.get("/verificet")
@@ -358,9 +369,8 @@ def verify_email_link(
 
 @router.get("/verificet/atkartot")
 def resend_form(request: Request):
-    return render(request, "verify_resend.html", current_user=None,
-                  form_ts=make_timestamp_token(),
-                  honeypot_field=HONEYPOT_FIELD, ts_field=TIMESTAMP_FIELD)
+    return render(request, "verify_resend.html", _antibot_ctx(),
+                  current_user=None)
 
 
 @router.post("/verificet/atkartot")
@@ -379,10 +389,8 @@ def resend_submit(
     retry_after = _rate_limit(request, "resend", email)
     if retry_after is not None:
         flash(request, "Pārāk daudz mēģinājumu. Mēģiniet vēlāk.", "error")
-        resp = render(request, "verify_resend.html", current_user=None,
-                      form_ts=make_timestamp_token(),
-                      honeypot_field=HONEYPOT_FIELD, ts_field=TIMESTAMP_FIELD,
-                      status_code=429)
+        resp = render(request, "verify_resend.html", _antibot_ctx(),
+                      current_user=None, status_code=429)
         resp.headers["Retry-After"] = str(int(retry_after) + 1)
         return resp
     # Анти-enumeration: ответ одинаковый вне зависимости от наличия аккаунта.

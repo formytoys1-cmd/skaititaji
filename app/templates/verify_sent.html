@@ -13,6 +13,14 @@
       Проверьте почту: мы отправили ссылку для подтверждения. Откройте её, чтобы
       активировать аккаунт и войти.
     </p>
+    {% if dev_link %}
+    <div class="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-left">
+      <p class="text-xs text-amber-800 font-medium mb-2">
+        Demo režīms (e-pasts nav konfigurēts): apstipriniet tieši šeit —
+      </p>
+      <a href="{{ dev_link }}" class="text-sm brand-text underline break-all">{{ dev_link }}</a>
+    </div>
+    {% endif %}
     <div class="mt-6 flex flex-col gap-2">
       <a href="/verificet/atkartot" class="text-sm brand-text underline">Nesaņēmāt vēstuli? Nosūtīt vēlreiz</a>
       <a href="/login" class="text-sm text-slate-600 underline">{{ t('nav.login') }}</a>
