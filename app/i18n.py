@@ -251,6 +251,18 @@ T: dict[str, dict[str, str]] = {
         "ru": "Вне периода подачи (показания будут приняты)",
         "en": "Outside the submission window (readings still accepted)",
     },
+    "res.window_closes": {
+        "lv": "aizvērsies", "ru": "закроется", "en": "closes",
+    },
+    "res.window_opens": {
+        "lv": "atvērsies", "ru": "откроется", "en": "opens",
+    },
+    "res.window_period": {
+        "lv": "Nodošanas periods", "ru": "Период подачи", "en": "Submission window",
+    },
+    "res.window_day": {
+        "lv": "datums", "ru": "число", "en": "of the month",
+    },
     "res.no_flat": {"lv": "Jūsu kontam nav piesaistīts neviens dzīvoklis.",
                     "ru": "К вашему аккаунту не привязана ни одна квартира.",
                     "en": "No apartment is linked to your account."},

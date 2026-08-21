@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session, select
 
@@ -23,7 +23,7 @@ from app.models import (
     User,
     UserRole,
 )
-from app.services import current_period
+from app.services import current_period, window_status
 from app.web import flash, render
 
 router = APIRouter()
@@ -31,6 +31,55 @@ router = APIRouter()
 
 def _require_manager(user: User) -> bool:
     return user.role in (UserRole.MANAGER, UserRole.SUPERADMIN)
+
+
+def _manager_org(session: Session, user: User) -> Organization | None:
+    if not _require_manager(user):
+        return None
+    if user.organization_id:
+        return session.get(Organization, user.organization_id)
+    return session.exec(select(Organization)).first()
+
+
+@router.get("/parvalde/iestatijumi")
+def settings_form(
+    request: Request,
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+):
+    org = _manager_org(session, user)
+    if not org:
+        return RedirectResponse("/", 303)
+    return render(request, "manager/settings.html",
+                  {"win": window_status(org)}, current_user=user, org=org)
+
+
+@router.post("/parvalde/iestatijumi")
+def settings_submit(
+    request: Request,
+    reading_day_from: str = Form(...),
+    reading_day_to: str = Form(...),
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
+):
+    org = _manager_org(session, user)
+    if not org:
+        return RedirectResponse("/", 303)
+
+    def _day(v: str, default: int) -> int:
+        try:
+            n = int(str(v).strip())
+        except (ValueError, TypeError):
+            return default
+        return min(28, max(1, n))  # 1..28, чтобы день существовал в любом месяце
+
+    org.reading_day_from = _day(reading_day_from, org.reading_day_from)
+    org.reading_day_to = _day(reading_day_to, org.reading_day_to)
+    session.add(org)
+    session.commit()
+    flash(request, "Nodošanas periods saglabāts.", "success")
+    return RedirectResponse("/parvalde/iestatijumi", 303)
 
 
 @router.get("/parvalde")

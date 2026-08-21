@@ -21,12 +21,19 @@
   <!-- Статус окна подачи — заметный баннер (визуальная иерархия) -->
   {% if window_open %}
     <div class="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200" role="status">
-      <span aria-hidden="true">●</span><span class="font-medium">{{ t('res.window_open') }}</span>
+      <span aria-hidden="true">●</span>
+      <span class="font-medium">{{ t('res.window_open') }}</span>
+      {% if win %}<span class="text-sm text-emerald-700">· {{ t('res.window_closes') }} {{ win.closes_on.strftime('%d.%m.%Y') }}</span>{% endif %}
     </div>
   {% else %}
     <div class="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-50 text-amber-800 border border-amber-200" role="status">
-      <span aria-hidden="true">⚠</span><span>{{ t('res.window_closed') }}</span>
+      <span aria-hidden="true">⚠</span>
+      <span>{{ t('res.window_closed') }}</span>
+      {% if win %}<span class="text-sm text-amber-700">· {{ t('res.window_opens') }} {{ win.opens_on.strftime('%d.%m.%Y') }}</span>{% endif %}
     </div>
+  {% endif %}
+  {% if win %}
+  <p class="mt-1 text-xs text-slate-500">{{ t('res.window_period') }}: {{ win.day_from }}.–{{ win.day_to }}. {{ t('res.window_day') }}</p>
   {% endif %}
 
   {% if not unit_cards %}

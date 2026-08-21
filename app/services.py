@@ -52,6 +52,77 @@ def is_window_open(org: Organization, today: Optional[date] = None) -> bool:
     return d >= a or d <= b
 
 
+def _clamp_day(year: int, month: int, day: int) -> date:
+    """Возвращает дату с днём day, но не больше последнего дня месяца."""
+    import calendar
+    last = calendar.monthrange(year, month)[1]
+    return date(year, month, min(day, last))
+
+
+def _add_month(year: int, month: int) -> tuple[int, int]:
+    return (year + 1, 1) if month == 12 else (year, month + 1)
+
+
+def _sub_month(year: int, month: int) -> tuple[int, int]:
+    return (year - 1, 12) if month == 1 else (year, month - 1)
+
+
+def window_status(org: Organization, today: Optional[date] = None) -> dict:
+    """Статус окна подачи с конкретными датами.
+
+    Возвращает dict:
+      - open: bool — открыто ли окно сейчас;
+      - day_from, day_to: int — настроенные дни месяца;
+      - opens_on: date — дата ближайшего открытия (если закрыто) или текущего
+        открытия (если открыто);
+      - closes_on: date — дата ближайшего закрытия (последний день приёма).
+    Корректно обрабатывает окно, пересекающее границу месяца (напр. 25→5).
+    """
+    today = today or date.today()
+    a, b = org.reading_day_from, org.reading_day_to
+    y, m, d = today.year, today.month, today.day
+    is_open = is_window_open(org, today)
+
+    if a <= b:
+        # Окно внутри одного месяца: [a..b].
+        if is_open:
+            opens_on = _clamp_day(y, m, a)
+            closes_on = _clamp_day(y, m, b)
+        elif d < a:
+            opens_on = _clamp_day(y, m, a)
+            closes_on = _clamp_day(y, m, b)
+        else:  # d > b — следующее окно в следующем месяце
+            ny, nm = _add_month(y, m)
+            opens_on = _clamp_day(ny, nm, a)
+            closes_on = _clamp_day(ny, nm, b)
+    else:
+        # Окно через границу месяца: [a..конец] ∪ [начало..b].
+        if is_open:
+            if d >= a:
+                # открылось в этом месяце, закроется b числом след. месяца
+                opens_on = _clamp_day(y, m, a)
+                ny, nm = _add_month(y, m)
+                closes_on = _clamp_day(ny, nm, b)
+            else:
+                # открылось a числом прошлого месяца, закроется b в этом
+                py, pm = _sub_month(y, m)
+                opens_on = _clamp_day(py, pm, a)
+                closes_on = _clamp_day(y, m, b)
+        else:
+            # закрыто: b < d < a → ближайшее открытие a числом этого месяца
+            opens_on = _clamp_day(y, m, a)
+            ny, nm = _add_month(y, m)
+            closes_on = _clamp_day(ny, nm, b)
+
+    return {
+        "open": is_open,
+        "day_from": a,
+        "day_to": b,
+        "opens_on": opens_on,
+        "closes_on": closes_on,
+    }
+
+
 class ReadingValidationError(Exception):
     pass
 

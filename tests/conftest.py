@@ -14,6 +14,16 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Сбрасывает process-global лимитер аутентификации между тестами,
+    чтобы серия логинов в полном прогоне не упиралась в 429."""
+    from app.ratelimit import auth_limiter
+    auth_limiter.clear()
+    yield
+    auth_limiter.clear()
+
+
 @pytest.fixture()
 def engine():
     """Изолированный in-memory SQLite для одного теста (общий для всех соединений)."""

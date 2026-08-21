@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Iestatījumi — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="max-w-2xl mx-auto px-4 py-8">
+  <nav aria-label="breadcrumb" class="text-sm text-slate-600 mb-3">
+    <a href="/parvalde" class="brand-text underline">Pārvalde</a> <span aria-hidden="true">›</span>
+    Iestatījumi
+  </nav>
+  <h1 class="text-2xl font-bold">Nodošanas perioda iestatījumi</h1>
+  <p class="text-slate-600 text-sm mt-1">
+    Norādiet, kurās mēneša dienās iedzīvotāji var nodot rādījumus. Periods var
+    šķērsot mēneša robežu (piem. no 25. līdz 5.).
+  </p>
+
+  <div class="mt-6 grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <form method="post" action="/parvalde/iestatijumi" class="space-y-4" onsubmit="lockSubmit(this)">
+{% include "_csrf.html" %}
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="reading_day_from" class="block text-sm font-medium mb-1">No dienas</label>
+            <input id="reading_day_from" name="reading_day_from" inputmode="numeric"
+                   value="{{ win.day_from }}" min="1" max="28"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300">
+          </div>
+          <div>
+            <label for="reading_day_to" class="block text-sm font-medium mb-1">Līdz dienai</label>
+            <input id="reading_day_to" name="reading_day_to" inputmode="numeric"
+                   value="{{ win.day_to }}" min="1" max="28"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300">
+          </div>
+        </div>
+        <p class="text-xs text-slate-500">Diena no 1 līdz 28 (lai eksistētu jebkurā mēnesī).</p>
+        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Saglabāt</button>
+      </form>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+      <div class="font-semibold mb-2">Pašreizējais statuss</div>
+      {% if win.open %}
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm">
+          <span aria-hidden="true">●</span> Nodošana atvērta
+        </div>
+        <p class="text-sm text-slate-600 mt-3">Aizvērsies: <strong>{{ win.closes_on.strftime('%d.%m.%Y') }}</strong></p>
+      {% else %}
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-sm">
+          <span aria-hidden="true">⚠</span> Ārpus perioda
+        </div>
+        <p class="text-sm text-slate-600 mt-3">Atvērsies: <strong>{{ win.opens_on.strftime('%d.%m.%Y') }}</strong></p>
+      {% endif %}
+      <p class="text-xs text-slate-500 mt-2">Periods: {{ win.day_from }}. – {{ win.day_to }}. datums</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

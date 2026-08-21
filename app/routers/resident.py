@@ -20,6 +20,7 @@ from app.services import (
     readings_history,
     units_for_user,
     upsert_reading,
+    window_status,
 )
 from app.web import flash, render
 
@@ -45,6 +46,7 @@ def dashboard(
     units = units_for_user(session, user.id)
     period = current_period()
     window_open = is_window_open(org) if org else True
+    win = window_status(org) if org else None
 
     unit_cards = []
     for unit in units:
@@ -70,6 +72,7 @@ def dashboard(
             "unit_cards": unit_cards,
             "period": period,
             "window_open": window_open,
+            "win": win,
         },
         current_user=user, org=org,
     )

@@ -8,6 +8,8 @@
       <p class="text-slate-500 text-sm">Periods: <strong>{{ period }}</strong> · Integrācija: {{ org.integration_provider }}</p>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
+      <a href="/parvalde/iestatijumi" class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-medium text-sm inline-flex items-center gap-1">
+        <span aria-hidden="true">⚙️</span>Nodošanas periods</a>
       <a href="/parvalde/eksports.csv" class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-medium text-sm inline-flex items-center gap-1">
         <span aria-hidden="true">⬇️</span>{{ t('res.export_csv') }}</a>
       <form method="post" action="/parvalde/sync" onsubmit="lockSubmit(this)">
