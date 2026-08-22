@@ -1,0 +1,110 @@
+name: self-improve
+# Месячный автономный самоулучшающийся контролёр (аудит + контроль + оптимизация +
+# саморазвитие). Детерминированный, без LLM, headless. Планировщик — GitHub Actions
+# schedule cron (облако), НЕ launchd. Логика: tools/self_improve_controller.py.
+#
+# safe-on-failure: baseline-red => контролёр только отчитывается, правок не вносит.
+# Безопасные обратимые правки открываются как PR (решает проект через merge).
+# Рискованные предложения — как issue (человек решает), без автомержа.
+on:
+  schedule:
+    - cron: "0 4 1 * *"   # 1-го числа каждого месяца, 04:00 UTC — РАЗ В МЕСЯЦ
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: self-improve
+  cancel-in-progress: false
+
+jobs:
+  self-improve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install -r requirements-dev.txt
+
+      - name: Run self-improve controller
+        id: controller
+        run: |
+          python -m tools.self_improve_controller --report-out self_improve_report.md
+          echo '--- report ---'
+          cat self_improve_report.md
+
+      - name: Detect safe changes
+        id: diff
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open PR with safe reversible changes
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: self-improve/monthly
+          delete-branch: true
+          commit-message: "chore(self-improve): месячные безопасные правки контролёра"
+          title: "🤖 Self-improve: месячные безопасные правки"
+          body-path: self_improve_report.md
+          labels: self-improve
+
+      - name: Open issue with risky proposals (human decides)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'data/self_improve/heartbeat.json';
+            if (!fs.existsSync(path)) return;
+            const hb = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const proposals = (hb.result && hb.result.proposals) || [];
+            if (!proposals.length) return;
+            const label = 'self-improve';
+            const title = `🔎 Self-improve: предложения (решает человек) — ${hb.ts.slice(0,7)}`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: label,
+            });
+            const body = [
+              'Детерминированный контролёр предлагает (без автомержа рискового):',
+              '',
+              ...proposals.map(p => `- [ ] ${p}`),
+              '',
+              hb.result.proposals_path ? `Подробности: \`${hb.result.proposals_path}\`` : '',
+            ].join('\n');
+            const dup = existing.data.find(i => i.title === title);
+            if (dup) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: dup.number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: [label],
+              });
+            }
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-improve-report
+          path: |
+            self_improve_report.md
+            data/self_improve/heartbeat.json

@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "description": "Реестр возможностей/критериев самоулучшающегося контролёра Skaitītāji. Детерминированный, без LLM. Каждый пункт — проверяемый инвариант качества/безопасности проекта или самого контролёра.",
+  "capabilities": [
+    {
+      "id": "pytest-green",
+      "title": "Тесты проекта зелёные",
+      "kind": "gate",
+      "critical": true,
+      "detail": "pytest по ключевым каталогам должен проходить; baseline-red => abort без правок."
+    },
+    {
+      "id": "coverage-key-modules",
+      "title": "Покрытие ключевых модулей >= порога",
+      "kind": "gate",
+      "critical": false,
+      "threshold": 80,
+      "detail": "Покрытие app.auth/app.config/app.services не ниже порога из pyproject."
+    },
+    {
+      "id": "ruff-clean",
+      "title": "Линтер ruff без ошибок",
+      "kind": "gate",
+      "critical": false,
+      "detail": "ruff check app tests — источник безопасных авто-fix правок (ruff --fix)."
+    },
+    {
+      "id": "workflows-have-dispatch",
+      "title": "Плановые workflow имеют workflow_dispatch",
+      "kind": "criterion",
+      "critical": false,
+      "detail": "Каждый workflow со schedule должен позволять ручной запуск (наблюдаемость/восстановление)."
+    },
+    {
+      "id": "self-heartbeat",
+      "title": "Контролёр оставляет heartbeat-маркер",
+      "kind": "self",
+      "critical": false,
+      "detail": "После прогона пишется data/self_improve/heartbeat.json — доказательство живости месячного цикла."
+    }
+  ]
+}
