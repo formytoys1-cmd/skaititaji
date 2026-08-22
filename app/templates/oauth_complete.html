@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Pabeigt reģistrāciju — {{ app_name }}{% endblock %}
+{% block title %}{{ t('oauth.complete_title') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-md mx-auto px-4 py-16">
   <div class="bg-white rounded-2xl border border-slate-200 p-8">
-    <h1 class="text-2xl font-bold">Pabeigt reģistrāciju</h1>
+    <h1 class="text-2xl font-bold">{{ t('oauth.complete_title') }}</h1>
     <p class="text-slate-600 text-sm mt-1">
-      Pieteikšanās ar <strong>{{ provider_name }}</strong> veiksmīga{% if email %}
+      {{ t('oauth.success_with') }} <strong>{{ provider_name }}</strong>{% if email %}
       (<span class="text-slate-800">{{ email }}</span>){% endif %}.
-      Norādiet dzīvokļa konta numuru, lai pabeigtu reģistrāciju.
+      {{ t('oauth.provide_account') }}
     </p>
     <form method="post" action="/registreties/pabeigt" class="mt-6 space-y-4" onsubmit="lockSubmit(this)">
 {% include "_csrf.html" %}

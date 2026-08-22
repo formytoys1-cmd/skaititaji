@@ -1,20 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Pārvalde — {{ app_name }}{% endblock %}
+{% block title %}{{ t('nav.management') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-6xl mx-auto px-4 py-8">
   <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
-      <h1 class="text-2xl font-bold">{{ org.name }} — pārvaldes panelis</h1>
-      <p class="text-slate-500 text-sm">Periods: <strong>{{ period }}</strong> · Integrācija: {{ org.integration_provider }}</p>
+      <h1 class="text-2xl font-bold">{{ org.name }} — {{ t('mgr.panel') }}</h1>
+      <p class="text-slate-500 text-sm">{{ t('mgr.period') }}: <strong>{{ period }}</strong> · {{ t('mgr.integration') }}: {{ org.integration_provider }}</p>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
       <a href="/parvalde/iestatijumi" class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-medium text-sm inline-flex items-center gap-1">
-        <span aria-hidden="true">⚙️</span>Nodošanas periods</a>
+        <span aria-hidden="true">⚙️</span>{{ t('mgr.window_btn') }}</a>
       <a href="/parvalde/eksports.csv" class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-medium text-sm inline-flex items-center gap-1">
         <span aria-hidden="true">⬇️</span>{{ t('res.export_csv') }}</a>
       <form method="post" action="/parvalde/sync" onsubmit="lockSubmit(this)">
 {% include "_csrf.html" %}
-        <button class="px-5 py-2.5 rounded-xl brand-bg text-white font-semibold"><span aria-hidden="true">⟳</span> Sinhronizēt ar Visma Horizon</button>
+        <button class="px-5 py-2.5 rounded-xl brand-bg text-white font-semibold"><span aria-hidden="true">⟳</span> {{ t('mgr.sync_btn') }}</button>
       </form>
     </div>
   </div>
@@ -23,8 +23,8 @@
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl brand-bg text-white flex items-center justify-center text-lg" aria-hidden="true">🏢</div>
       <div>
-        <div class="font-semibold">Objekti — mājas, dzīvokļi, skaitītāji</div>
-        <div class="text-xs text-slate-600">Izveidojiet struktūru, lai iedzīvotāji varētu reģistrēties un nodot rādījumus</div>
+        <div class="font-semibold">{{ t('mgr.objects_card') }}</div>
+        <div class="text-xs text-slate-600">{{ t('mgr.objects_card_desc') }}</div>
       </div>
     </div>
     <span class="text-slate-500" aria-hidden="true">→</span>
@@ -33,10 +33,10 @@
   <!-- Статистика -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
     {% set cards = [
-      ("Nodošanas gaita", stats.progress ~ "%", "brand"),
-      ("Nodoti / skaitītāji", stats.submitted ~ " / " ~ stats.meters, "slate"),
-      ("Vēl nav nodoti", stats.pending, "amber"),
-      ("Anomālijas", stats.anomalies, "red"),
+      (t('mgr.stat_progress'), stats.progress ~ "%", "brand"),
+      (t('mgr.stat_submitted'), stats.submitted ~ " / " ~ stats.meters, "slate"),
+      (t('mgr.stat_pending'), stats.pending, "amber"),
+      (t('mgr.stat_anomalies'), stats.anomalies, "red"),
     ] %}
     {% for label, value, color in cards %}
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
@@ -49,43 +49,43 @@
   </div>
 
   <div class="mt-2 bg-white rounded-full h-2 overflow-hidden border border-slate-200"
-       role="progressbar" aria-label="Nodošanas gaita" aria-valuenow="{{ stats.progress }}" aria-valuemin="0" aria-valuemax="100">
+       role="progressbar" aria-label="{{ t('mgr.stat_progress') }}" aria-valuenow="{{ stats.progress }}" aria-valuemin="0" aria-valuemax="100">
     <div class="h-full brand-bg" style="width: {{ stats.progress }}%"></div>
   </div>
 
   <!-- Таблица счётчиков -->
   <div class="mt-8 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-    <div class="px-5 py-3 border-b border-slate-200 font-semibold">Skaitītāju statuss ({{ period }})</div>
+    <div class="px-5 py-3 border-b border-slate-200 font-semibold">{{ t('mgr.meters_status') }} ({{ period }})</div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <caption class="sr-only">Skaitītāju statuss periodam {{ period }}</caption>
+        <caption class="sr-only">{{ t('mgr.meters_status') }} {{ period }}</caption>
         <thead class="bg-slate-50 text-slate-600 text-left">
           <tr>
-            <th scope="col" class="px-4 py-2 font-medium">Dzīvoklis</th>
-            <th scope="col" class="px-4 py-2 font-medium">Tips</th>
-            <th scope="col" class="px-4 py-2 font-medium">Skaitītājs</th>
-            <th scope="col" class="px-4 py-2 font-medium text-right">Rādījums</th>
-            <th scope="col" class="px-4 py-2 font-medium text-right">Patēriņš</th>
-            <th scope="col" class="px-4 py-2 font-medium">Statuss</th>
+            <th scope="col" class="px-4 py-2 font-medium">{{ t('mgr.col_unit') }}</th>
+            <th scope="col" class="px-4 py-2 font-medium">{{ t('mgr.col_type') }}</th>
+            <th scope="col" class="px-4 py-2 font-medium">{{ t('mgr.col_meter') }}</th>
+            <th scope="col" class="px-4 py-2 font-medium text-right">{{ t('mgr.col_reading') }}</th>
+            <th scope="col" class="px-4 py-2 font-medium text-right">{{ t('mgr.col_consumption') }}</th>
+            <th scope="col" class="px-4 py-2 font-medium">{{ t('mgr.col_status') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
           {% for r in rows %}
           <tr class="{% if r.reading and r.reading.is_anomaly %}bg-amber-50{% endif %}">
             <td class="px-4 py-2">{{ r.unit.number if r.unit }}</td>
-            <td class="px-4 py-2">{{ r.type.icon }} {{ r.type.name_lv }}</td>
+            <td class="px-4 py-2">{{ r.type.icon }} {{ meter_name(r.type) }}</td>
             <td class="px-4 py-2 text-slate-600">{{ r.meter.serial_number }}</td>
             <td class="px-4 py-2 text-right">{{ '%.3f'|format(r.reading.value) if r.reading else '—' }}</td>
             <td class="px-4 py-2 text-right">{{ '%.3f'|format(r.reading.consumption) if r.reading and r.reading.consumption is not none else '—' }}</td>
             <td class="px-4 py-2">
               {% if not r.reading %}
-                <span class="text-amber-700">● Gaida</span>
+                <span class="text-amber-700">● {{ t('mgr.st_waiting') }}</span>
               {% elif r.reading.is_anomaly %}
-                <span class="text-red-700">⚠ Anomālija</span>
+                <span class="text-red-700">⚠ {{ t('mgr.st_anomaly') }}</span>
               {% elif r.reading.status.value == 'synced' %}
-                <span class="text-emerald-700">✓ Sinhronizēts</span>
+                <span class="text-emerald-700">✓ {{ t('mgr.st_synced') }}</span>
               {% else %}
-                <span class="text-sky-700">✓ Nodots</span>
+                <span class="text-sky-700">✓ {{ t('mgr.st_submitted') }}</span>
               {% endif %}
             </td>
           </tr>
@@ -97,7 +97,7 @@
 
   <!-- Журнал интеграции -->
   <div class="mt-8 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-    <div class="px-5 py-3 border-b border-slate-200 font-semibold">Integrācijas žurnāls</div>
+    <div class="px-5 py-3 border-b border-slate-200 font-semibold">{{ t('mgr.integ_log') }}</div>
     {% if logs %}
     <div class="divide-y divide-slate-100 text-sm">
       {% for log in logs %}
@@ -112,7 +112,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="px-5 py-6 text-slate-600 text-sm">Vēl nav sinhronizāciju.</div>
+    <div class="px-5 py-6 text-slate-600 text-sm">{{ t('mgr.no_sync') }}</div>
     {% endif %}
   </div>
 </section>

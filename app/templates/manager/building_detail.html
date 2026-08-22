@@ -3,8 +3,8 @@
 {% block content %}
 <section class="max-w-4xl mx-auto px-4 py-8">
   <nav aria-label="breadcrumb" class="text-sm text-slate-600 mb-3">
-    <a href="/parvalde" class="brand-text underline">Pārvalde</a> <span aria-hidden="true">›</span>
-    <a href="/parvalde/objekti" class="brand-text underline">Objekti</a> <span aria-hidden="true">›</span>
+    <a href="/parvalde" class="brand-text underline">{{ t('nav.management') }}</a> <span aria-hidden="true">›</span>
+    <a href="/parvalde/objekti" class="brand-text underline">{{ t('nav.objects') }}</a> <span aria-hidden="true">›</span>
     {{ building.name or building.address }}
   </nav>
   <h1 class="text-2xl font-bold">{{ building.name or building.address }}</h1>
@@ -12,77 +12,77 @@
 
   <div class="grid md:grid-cols-3 gap-6 mt-6">
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
-      <div class="font-semibold mb-3">Pievienot dzīvokli</div>
+      <div class="font-semibold mb-3">{{ t('mgr.add_unit') }}</div>
       <form method="post" action="/parvalde/objekti/{{ building.id }}/units" class="space-y-3 text-sm" onsubmit="lockSubmit(this)">
 {% include "_csrf.html" %}
         <div>
-          <label for="number" class="block font-medium mb-1">Dzīvokļa Nr. *</label>
+          <label for="number" class="block font-medium mb-1">{{ t('mgr.unit_no') }} *</label>
           <input id="number" name="number" required class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="12">
         </div>
         <div>
-          <label for="account_number" class="block font-medium mb-1">Konta numurs</label>
+          <label for="account_number" class="block font-medium mb-1">{{ t('mgr.account_number') }}</label>
           <input id="account_number" name="account_number" class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="LV-...">
-          <p class="text-xs text-slate-600 mt-1">Ar šo numuru iedzīvotājs reģistrējas.</p>
+          <p class="text-xs text-slate-600 mt-1">{{ t('mgr.account_hint') }}</p>
         </div>
         <div>
-          <label for="area_m2" class="block font-medium mb-1">Platība m²</label>
+          <label for="area_m2" class="block font-medium mb-1">{{ t('mgr.area') }}</label>
           <input id="area_m2" name="area_m2" inputmode="decimal" class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="52">
         </div>
-        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Pievienot</button>
+        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">{{ t('mgr.add') }}</button>
       </form>
 
       <div class="mt-6 pt-5 border-t border-slate-200">
-        <div class="font-semibold mb-1">Ģenerēt dzīvokļus</div>
-        <p class="text-xs text-slate-600 mb-3">Piem. 119. sērija: 2 kāpņutelpas × 10 stāvi × 4 dzīvokļi = 80.</p>
+        <div class="font-semibold mb-1">{{ t('mgr.generate_units') }}</div>
+        <p class="text-xs text-slate-600 mb-3">{{ t('mgr.generate_hint') }}</p>
         <form method="post" action="/parvalde/objekti/{{ building.id }}/generate" class="space-y-3 text-sm" onsubmit="lockSubmit(this)">
 {% include "_csrf.html" %}
           <div class="grid grid-cols-3 gap-2">
             <div>
-              <label for="entrances" class="block font-medium mb-1">Kāpņutelpas</label>
+              <label for="entrances" class="block font-medium mb-1">{{ t('mgr.entrances') }}</label>
               <input id="entrances" name="entrances" inputmode="numeric" value="2" class="w-full px-2 py-2 rounded-lg border border-slate-300">
             </div>
             <div>
-              <label for="floors" class="block font-medium mb-1">Stāvi *</label>
+              <label for="floors" class="block font-medium mb-1">{{ t('mgr.floors') }} *</label>
               <input id="floors" name="floors" inputmode="numeric" required value="10" class="w-full px-2 py-2 rounded-lg border border-slate-300">
             </div>
             <div>
-              <label for="per_floor" class="block font-medium mb-1">Dz./stāvā *</label>
+              <label for="per_floor" class="block font-medium mb-1">{{ t('mgr.per_floor') }} *</label>
               <input id="per_floor" name="per_floor" inputmode="numeric" required value="4" class="w-full px-2 py-2 rounded-lg border border-slate-300">
             </div>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label for="start_number" class="block font-medium mb-1">Sākt no Nr.</label>
+              <label for="start_number" class="block font-medium mb-1">{{ t('mgr.start_from') }}</label>
               <input id="start_number" name="start_number" inputmode="numeric" value="1" class="w-full px-2 py-2 rounded-lg border border-slate-300">
             </div>
             <div>
-              <label for="max_residents" class="block font-medium mb-1">Lietotāji/dz.</label>
+              <label for="max_residents" class="block font-medium mb-1">{{ t('mgr.users_per_unit') }}</label>
               <input id="max_residents" name="max_residents" inputmode="numeric" value="2" class="w-full px-2 py-2 rounded-lg border border-slate-300">
             </div>
           </div>
           <div>
-            <label for="account_prefix" class="block font-medium mb-1">Konta prefikss</label>
+            <label for="account_prefix" class="block font-medium mb-1">{{ t('mgr.account_prefix') }}</label>
             <input id="account_prefix" name="account_prefix" class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="LV-{{ building.id }}-">
           </div>
-          <button class="w-full py-2.5 rounded-lg bg-slate-800 text-white font-semibold hover:bg-slate-900">Ģenerēt dzīvokļus</button>
+          <button class="w-full py-2.5 rounded-lg bg-slate-800 text-white font-semibold hover:bg-slate-900">{{ t('mgr.generate_units') }}</button>
         </form>
       </div>
     </div>
 
     <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <div class="px-5 py-3 border-b border-slate-200 font-semibold">Dzīvokļi ({{ rows|length }})</div>
+      <div class="px-5 py-3 border-b border-slate-200 font-semibold">{{ t('mgr.units_count') }} ({{ rows|length }})</div>
       {% if not rows %}
-        <div class="px-5 py-8 text-center text-slate-600 text-sm">Vēl nav dzīvokļu.</div>
+        <div class="px-5 py-8 text-center text-slate-600 text-sm">{{ t('mgr.no_units') }}</div>
       {% else %}
       <div class="divide-y divide-slate-100">
         {% for r in rows %}
         <a href="/parvalde/dzivoklis/{{ r.unit.id }}" class="block px-5 py-3 hover:bg-slate-50">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <div class="font-medium">Dzīvoklis {{ r.unit.number }}</div>
+              <div class="font-medium">{{ t('mgr.col_unit') }} {{ r.unit.number }}</div>
               <div class="text-xs text-slate-600">{{ r.unit.account_number or '—' }}</div>
             </div>
-            <span class="text-sm text-slate-600">{{ r.meters }} skaitītāji →</span>
+            <span class="text-sm text-slate-600">{{ r.meters }} {{ t('mgr.meters_suffix') }} →</span>
           </div>
         </a>
         {% endfor %}

@@ -1,23 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Dzīvoklis {{ unit.number }} — {{ app_name }}{% endblock %}
+{% block title %}{{ t('mgr.col_unit') }} {{ unit.number }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-4xl mx-auto px-4 py-8">
   <nav aria-label="breadcrumb" class="text-sm text-slate-600 mb-3">
-    <a href="/parvalde" class="brand-text underline">Pārvalde</a> <span aria-hidden="true">›</span>
-    <a href="/parvalde/objekti" class="brand-text underline">Objekti</a> <span aria-hidden="true">›</span>
+    <a href="/parvalde" class="brand-text underline">{{ t('nav.management') }}</a> <span aria-hidden="true">›</span>
+    <a href="/parvalde/objekti" class="brand-text underline">{{ t('nav.objects') }}</a> <span aria-hidden="true">›</span>
     <a href="/parvalde/objekti/{{ building.id }}" class="brand-text underline">{{ building.name or building.address }}</a> <span aria-hidden="true">›</span>
-    Dzīvoklis {{ unit.number }}
+    {{ t('mgr.col_unit') }} {{ unit.number }}
   </nav>
-  <h1 class="text-2xl font-bold">Dzīvoklis {{ unit.number }}</h1>
-  <p class="text-slate-600 text-sm mt-1">Konts: {{ unit.account_number or '—' }}{% if unit.area_m2 %} · {{ unit.area_m2 }} m²{% endif %}</p>
+  <h1 class="text-2xl font-bold">{{ t('mgr.col_unit') }} {{ unit.number }}</h1>
+  <p class="text-slate-600 text-sm mt-1">{{ t('mgr.account') }}: {{ unit.account_number or '—' }}{% if unit.area_m2 %} · {{ unit.area_m2 }} m²{% endif %}</p>
 
   <div class="grid md:grid-cols-3 gap-6 mt-6">
     <div class="bg-white rounded-2xl border border-slate-200 p-5">
-      <div class="font-semibold mb-3">Pievienot skaitītāju</div>
+      <div class="font-semibold mb-3">{{ t('mgr.add_meter') }}</div>
       <form method="post" action="/parvalde/dzivoklis/{{ unit.id }}/meters" class="space-y-3 text-sm" onsubmit="lockSubmit(this)">
 {% include "_csrf.html" %}
         <div>
-          <label for="meter_type_id" class="block font-medium mb-1">Tips *</label>
+          <label for="meter_type_id" class="block font-medium mb-1">{{ t('mgr.col_type') }} *</label>
           <select id="meter_type_id" name="meter_type_id" required class="w-full px-3 py-2 rounded-lg border border-slate-300">
             {% for mt in meter_types %}
             <option value="{{ mt.id }}">{{ mt.icon }} {{ meter_name(mt) }} ({{ mt.unit }})</option>
@@ -25,25 +25,25 @@
           </select>
         </div>
         <div>
-          <label for="serial_number" class="block font-medium mb-1">Skaitītāja Nr. *</label>
+          <label for="serial_number" class="block font-medium mb-1">{{ t('mgr.meter_no') }} *</label>
           <input id="serial_number" name="serial_number" required class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="AK-2021-...">
         </div>
         <div>
-          <label for="location" class="block font-medium mb-1">Atrašanās vieta</label>
+          <label for="location" class="block font-medium mb-1">{{ t('mgr.location') }}</label>
           <input id="location" name="location" class="w-full px-3 py-2 rounded-lg border border-slate-300" placeholder="Vannas istaba">
         </div>
         <div>
-          <label for="initial_value" class="block font-medium mb-1">Sākuma rādījums</label>
+          <label for="initial_value" class="block font-medium mb-1">{{ t('mgr.initial_reading') }}</label>
           <input id="initial_value" name="initial_value" inputmode="decimal" value="0" class="w-full px-3 py-2 rounded-lg border border-slate-300">
         </div>
-        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">Pievienot</button>
+        <button class="w-full py-2.5 rounded-lg brand-bg text-white font-semibold">{{ t('mgr.add') }}</button>
       </form>
     </div>
 
     <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <div class="px-5 py-3 border-b border-slate-200 font-semibold">Skaitītāji ({{ meters|length }})</div>
+      <div class="px-5 py-3 border-b border-slate-200 font-semibold">{{ t('mgr.meters_count') }} ({{ meters|length }})</div>
       {% if not meters %}
-        <div class="px-5 py-8 text-center text-slate-600 text-sm">Vēl nav skaitītāju.</div>
+        <div class="px-5 py-8 text-center text-slate-600 text-sm">{{ t('mgr.no_meters') }}</div>
       {% else %}
       <div class="divide-y divide-slate-100">
         {% for m in meters %}
@@ -51,7 +51,7 @@
           <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background: {{ m.meter_type.color }}18;" aria-hidden="true">{{ m.meter_type.icon }}</div>
           <div class="flex-1">
             <div class="font-medium">{{ meter_name(m.meter_type) }}</div>
-            <div class="text-xs text-slate-600">Nr. {{ m.serial_number }}{% if m.location %} · {{ m.location }}{% endif %} · sākums {{ '%.3f'|format(m.initial_value) }} {{ m.meter_type.unit }}</div>
+            <div class="text-xs text-slate-600">{{ t('mgr.meter_no') }} {{ m.serial_number }}{% if m.location %} · {{ m.location }}{% endif %} · {{ t('mgr.initial_short') }} {{ '%.3f'|format(m.initial_value) }} {{ m.meter_type.unit }}</div>
           </div>
         </div>
         {% endfor %}

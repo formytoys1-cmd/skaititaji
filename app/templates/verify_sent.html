@@ -1,28 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Apstipriniet e-pastu — {{ app_name }}{% endblock %}
+{% block title %}{{ t('verify.sent_title') }} — {{ app_name }}{% endblock %}
 {% block content %}
 <section class="max-w-md mx-auto px-4 py-16">
   <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center">
     <div class="text-4xl">📧</div>
-    <h1 class="text-2xl font-bold mt-3">Pārbaudiet savu e-pastu</h1>
+    <h1 class="text-2xl font-bold mt-3">{{ t('verify.sent_title') }}</h1>
     <p class="text-slate-600 mt-2">
-      Nosūtījām apstiprinājuma saiti uz jūsu e-pastu. Atveriet to, lai
-      aktivizētu kontu un pieteiktos.
-    </p>
-    <p class="text-slate-500 text-sm mt-4">
-      Проверьте почту: мы отправили ссылку для подтверждения. Откройте её, чтобы
-      активировать аккаунт и войти.
+      {{ t('verify.sent_desc') }}
     </p>
     {% if dev_link %}
     <div class="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-left">
       <p class="text-xs text-amber-800 font-medium mb-2">
-        Demo režīms (e-pasts nav konfigurēts): apstipriniet tieši šeit —
+        {{ t('verify.demo_mode') }}
       </p>
       <a href="{{ dev_link }}" class="text-sm brand-text underline break-all">{{ dev_link }}</a>
     </div>
     {% endif %}
     <div class="mt-6 flex flex-col gap-2">
-      <a href="/verificet/atkartot" class="text-sm brand-text underline">Nesaņēmāt vēstuli? Nosūtīt vēlreiz</a>
+      <a href="/verificet/atkartot" class="text-sm brand-text underline">{{ t('verify.resend_link') }}</a>
       <a href="/login" class="text-sm text-slate-600 underline">{{ t('nav.login') }}</a>
     </div>
   </div>
