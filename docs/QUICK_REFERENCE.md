@@ -9,8 +9,8 @@
 - Вход: https://skaititaji.onrender.com/login
 - Помощь/мануалы: https://skaititaji.onrender.com/palidziba
 - Репозиторий: https://github.com/formytoys1-cmd/skaititaji
-- Рекомендованный домен для покупки: **`nodosana.lv`** (свободен, проверено —
-  «nodošana» = «подача/сдача», совпадает с описанием платформы, произносится
+- Рекомендованный домен для покупки: **`skait.lv`** (свободен, проверено —
+  5 букв, корень «skaitītājs»/«skaitīt», без шипящих š/č/ž, произносится
   однозначно). Инструкция по подключению своего домена:
   [docs/CUSTOM_DOMAIN.md](CUSTOM_DOMAIN.md).
 
