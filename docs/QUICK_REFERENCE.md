@@ -9,6 +9,9 @@
 - Вход: https://skaititaji.onrender.com/login
 - Помощь/мануалы: https://skaititaji.onrender.com/palidziba
 - Репозиторий: https://github.com/formytoys1-cmd/skaititaji
+- Рекомендованный домен для покупки: **`nodod.lv`** (свободен, проверено —
+  «nodod rādījumus» = «подай показания», легко запоминается). Инструкция по
+  подключению своего домена: [docs/CUSTOM_DOMAIN.md](CUSTOM_DOMAIN.md).
 
 ## QR‑коды (сканируй с телефона)
 QR «живые» — их отдаёт само приложение, поэтому они всегда указывают на актуальный
