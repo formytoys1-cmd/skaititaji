@@ -42,6 +42,34 @@
     </div>
   {% endif %}
 
+  {% if unit_cards %}
+  <form method="post" action="/dzivoklis/photo/recognize" enctype="multipart/form-data"
+        class="mt-6 bg-white rounded-2xl border border-slate-200 p-5 space-y-3" onsubmit="lockSubmit(this)">
+    {% include "_csrf.html" %}
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h2 class="font-semibold">{{ t('res.photo_title') }}</h2>
+      <span class="text-xs text-slate-500">{{ t('res.photo_multi') }}</span>
+    </div>
+    <p class="text-sm text-slate-600">{{ t('res.photo_hint') }}</p>
+    <div class="flex items-center gap-3 flex-wrap">
+      <label class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white brand-bg cursor-pointer select-none"
+             onclick="fpActivate(this)">
+        <span class="fp-icon" aria-hidden="true">📷</span>
+        <span>{{ t('res.photo_pick') }}</span>
+        <input type="file" name="photos" multiple accept="image/*" capture="environment"
+               class="sr-only"
+               data-none="{{ t('inbox.no_file') }}"
+               data-many="{{ t('inbox.files_n') }}"
+               onchange="fpUpdate(this)">
+      </label>
+      <span class="file-name text-sm text-slate-500">{{ t('inbox.no_file') }}</span>
+      <button class="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 font-medium">
+        {{ t('res.photo_recognize') }}
+      </button>
+    </div>
+  </form>
+  {% endif %}
+
   <form method="post" action="/dzivoklis/submit" class="mt-6 space-y-6" onsubmit="lockSubmit(this)">
 {% include "_csrf.html" %}
     {% for card in unit_cards %}

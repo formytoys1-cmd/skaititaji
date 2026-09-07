@@ -1,14 +1,16 @@
 """Кабинет жителя: просмотр квартир, счётчиков и подача показаний."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, File, Request, UploadFile
 from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session
 
 from app.auth import require_user
 from app.csrf import csrf_protect
 from app.database import get_session
+from app.i18n import t as i18n_t
 from app.models import Meter, Organization, ReadingSource, User, UserRole
+from app.photo_ocr import PhotoOCRError, PhotoOCRResult, recognize_meter_photo
 from app.services import (
     ReadingValidationError,
     average_consumption,
@@ -22,15 +24,32 @@ from app.services import (
     upsert_reading,
     window_status,
 )
-from app.web import flash, render
+from app.web import current_lang, flash, render
 
 router = APIRouter()
+MAX_PHOTO_FILES = 10
+MAX_PHOTO_BYTES = 8 * 1024 * 1024
 
 
 def _resident_org(session: Session, user: User) -> Organization | None:
     if user.organization_id:
         return session.get(Organization, user.organization_id)
     return None
+
+
+def _resident_meters(session: Session, user: User) -> list[dict]:
+    rows = []
+    for unit in units_for_user(session, user.id):
+        for meter in meters_for_unit(session, unit.id):
+            prev = last_reading(session, meter.id)
+            prev_value = prev.value if prev else meter.initial_value
+            rows.append({
+                "id": meter.id,
+                "label": f"{unit.number} · {meter.serial_number}",
+                "unit": meter.meter_type.unit if meter.meter_type else "",
+                "prev_value": prev_value,
+            })
+    return rows
 
 
 @router.get("/dzivoklis")
@@ -127,6 +146,168 @@ async def submit(
         flash(request, f"Nodoti {submitted} rādījumi par periodu {period}.", "success")
     elif not errors:
         flash(request, "Nav ievadīts neviens rādījums.", "info")
+
+    return RedirectResponse("/dzivoklis", 303)
+
+
+@router.post("/dzivoklis/photo/recognize")
+async def recognize_from_photos(
+    request: Request,
+    photos: list[UploadFile] = File(default=[]),
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
+):
+    if user.role != UserRole.RESIDENT:
+        return RedirectResponse("/", 303)
+
+    lang = current_lang(request)
+    meter_options = _resident_meters(session, user)
+    if not meter_options:
+        flash(request, i18n_t(lang, "res.photo_no_meters"), "error")
+        return RedirectResponse("/dzivoklis", 303)
+    if not photos:
+        flash(request, i18n_t(lang, "res.photo_no_files"), "error")
+        return RedirectResponse("/dzivoklis", 303)
+    if len(photos) > MAX_PHOTO_FILES:
+        flash(
+            request,
+            i18n_t(lang, "res.photo_too_many").format(max_files=MAX_PHOTO_FILES),
+            "error",
+        )
+        return RedirectResponse("/dzivoklis", 303)
+
+    results: list[dict] = []
+    for idx, photo in enumerate(photos):
+        if not photo.filename:
+            continue
+        content_type = photo.content_type or ""
+        if content_type and not content_type.startswith("image/"):
+            results.append({
+                "idx": idx,
+                "filename": photo.filename,
+                "ocr": PhotoOCRResult(
+                    value=None,
+                    candidates=[],
+                    raw_text="",
+                    provider="validation",
+                    warning=i18n_t(lang, "res.photo_not_image"),
+                ),
+            })
+            continue
+
+        data = await photo.read()
+        if not data:
+            continue
+        if len(data) > MAX_PHOTO_BYTES:
+            results.append({
+                "idx": idx,
+                "filename": photo.filename,
+                "ocr": PhotoOCRResult(
+                    value=None,
+                    candidates=[],
+                    raw_text="",
+                    provider="validation",
+                    warning=i18n_t(lang, "res.photo_too_large").format(
+                        max_mb=MAX_PHOTO_BYTES // (1024 * 1024)
+                    ),
+                ),
+            })
+            continue
+        try:
+            ocr = await recognize_meter_photo(
+                filename=photo.filename,
+                data=data,
+                content_type=content_type or "application/octet-stream",
+            )
+        except PhotoOCRError as exc:
+            ocr = PhotoOCRResult(
+                value=None,
+                candidates=[],
+                raw_text="",
+                provider="ocr",
+                warning=str(exc),
+            )
+        results.append({"idx": idx, "filename": photo.filename, "ocr": ocr})
+
+    if not results:
+        flash(request, i18n_t(lang, "res.photo_no_files"), "error")
+        return RedirectResponse("/dzivoklis", 303)
+
+    org = _resident_org(session, user)
+    return render(
+        request,
+        "resident/photo_review.html",
+        {
+            "period": current_period(),
+            "rows": results,
+            "meter_options": meter_options,
+        },
+        current_user=user,
+        org=org,
+    )
+
+
+@router.post("/dzivoklis/photo/confirm")
+async def confirm_photo_readings(
+    request: Request,
+    user: User = Depends(require_user),
+    session: Session = Depends(get_session),
+    _csrf: None = Depends(csrf_protect),
+):
+    if user.role != UserRole.RESIDENT:
+        return RedirectResponse("/", 303)
+
+    lang = current_lang(request)
+    period = current_period()
+    form = await request.form()
+    meter_map = {m["id"]: m for m in _resident_meters(session, user)}
+
+    submitted, errors = 0, []
+    for row_id in form.getlist("row_ids"):
+        if form.get(f"confirm_{row_id}") != "1":
+            continue
+        meter_raw = (form.get(f"meter_{row_id}") or "").strip()
+        value_raw = (form.get(f"value_{row_id}") or "").strip().replace(",", ".")
+        if not meter_raw or not value_raw:
+            errors.append(i18n_t(lang, "res.photo_missing_data"))
+            continue
+        try:
+            meter_id = int(meter_raw)
+            value = float(value_raw)
+        except ValueError:
+            errors.append(i18n_t(lang, "res.photo_bad_value"))
+            continue
+        if meter_id not in meter_map:
+            errors.append(i18n_t(lang, "res.photo_meter_forbidden"))
+            continue
+        meter = session.get(Meter, meter_id)
+        if not meter:
+            errors.append(i18n_t(lang, "res.photo_meter_missing"))
+            continue
+        try:
+            upsert_reading(
+                session,
+                meter,
+                value,
+                period,
+                submitted_by_id=user.id,
+                actor_id=user.id,
+            )
+            submitted += 1
+        except ReadingValidationError as exc:
+            errors.append(f"{meter.serial_number}: {exc}")
+
+    for err in errors:
+        flash(request, err, "error")
+    if submitted:
+        flash(
+            request,
+            i18n_t(lang, "res.photo_saved").format(count=submitted, period=period),
+            "success",
+        )
+    elif not errors:
+        flash(request, i18n_t(lang, "res.photo_nothing_confirmed"), "info")
 
     return RedirectResponse("/dzivoklis", 303)
 

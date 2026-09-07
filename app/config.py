@@ -101,6 +101,15 @@ class Settings:
             os.getenv("DEFAULT_UNIT_CAPACITY", "2") or "2"
         )
 
+        # OCR распознавание фото счётчиков (free-режим через OCR.space).
+        self.ocr_space_api_key: str = os.getenv("OCR_SPACE_API_KEY", "")
+        self.ocr_space_allow_demo_key: bool = (
+            os.getenv("OCR_SPACE_ALLOW_DEMO_KEY", "1") == "1"
+        )
+        self.ocr_space_timeout_sec: int = int(
+            os.getenv("OCR_SPACE_TIMEOUT_SEC", "20") or "20"
+        )
+
     @property
     def email_configured(self) -> bool:
         """Настроен ли реальный SMTP (иначе используется outbox-фоллбек)."""

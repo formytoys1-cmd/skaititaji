@@ -17,7 +17,6 @@ import sys
 
 import httpx
 
-
 API = "https://api.render.com/v1"
 
 

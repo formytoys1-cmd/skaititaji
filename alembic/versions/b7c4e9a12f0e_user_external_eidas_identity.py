@@ -12,8 +12,8 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 import sqlmodel
-from alembic import op
 
+from alembic import op
 
 revision: str = 'b7c4e9a12f0e'
 down_revision: Union[str, None] = 'f21d22a66b1d'
